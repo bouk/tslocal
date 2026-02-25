@@ -69,7 +69,7 @@ export const PeerStatusSchema = z.object({
   DNSName: z.string().default(""),
   /** HostInfo.OS */
   OS: z.string().default(""),
-  UserID: int64.default(0),
+  UserID: int64.default(0n),
   /**
    * AltSharerUserID is the user who shared this node
    * if it's different than UserID. Otherwise it's zero.
@@ -98,8 +98,8 @@ export const PeerStatusSchema = z.object({
   Relay: z.string().default(""),
   /** peer relay address (ip:port:vni) */
   PeerRelay: z.string().default(""),
-  RxBytes: int64.default(0),
-  TxBytes: int64.default(0),
+  RxBytes: int64.default(0n),
+  TxBytes: int64.default(0n),
   /** time registered with tailcontrol */
   Created: z.string().default(""),
   /** time last packet sent */
@@ -125,7 +125,7 @@ export const PeerStatusSchema = z.object({
   /** PeerAPIURL are the URLs of the node's PeerAPI servers. */
   PeerAPIURL: goSlice(z.string()),
   /** TaildropTargetStatus represents the node's eligibility to have files shared to it. */
-  TaildropTarget: int64.default(0),
+  TaildropTarget: int64.default(0n),
   /** Reason why this peer cannot receive files. Empty if CanReceiveFiles=true */
   NoFileSharingReason: z.string().default(""),
   /**
@@ -220,7 +220,7 @@ export type TailnetStatus = z.infer<typeof TailnetStatusSchema>;
  * It also includes derived data from one of the user's logins.
  */
 export const UserProfileSchema = z.object({
-  ID: int64.default(0),
+  ID: int64.default(0n),
   /** "alice@smith.com"; for display purposes only (provider is not listed) */
   LoginName: z.string().default(""),
   /** "Alice Smith" */
@@ -367,7 +367,7 @@ export const PingResultSchema = z.object({
    * DERPRegionID is non-zero DERP region ID if DERP was used.
    * It is not currently set for TSMP pings.
    */
-  DERPRegionID: int64.default(0),
+  DERPRegionID: int64.default(0n),
   /**
    * DERPRegionCode is the three-letter region code
    * corresponding to DERPRegionID.
@@ -398,7 +398,7 @@ export const TKAKeySchema = z.object({
   Kind: z.string().default(""),
   Key: z.string().default(""),
   Metadata: goMap(z.string()),
-  Votes: int64.default(0),
+  Votes: int64.default(0n),
 });
 export type TKAKey = z.infer<typeof TKAKeySchema>;
 
@@ -406,7 +406,7 @@ export type TKAKey = z.infer<typeof TKAKeySchema>;
 export const TKAPeerSchema = z.object({
   /** DNS */
   Name: z.string().default(""),
-  ID: int64.default(0),
+  ID: int64.default(0n),
   StableID: z.string().default(""),
   /** Tailscale IP(s) assigned to this node */
   TailscaleIPs: goSlice(z.string()),
@@ -463,7 +463,7 @@ export const NetworkLockStatusSchema = z.object({
    * generated upon enablement. This field is not populated if the
    * network lock is disabled.
    */
-  StateID: int64.default(0),
+  StateID: int64.default(0n),
 });
 export type NetworkLockStatus = z.infer<typeof NetworkLockStatusSchema>;
 
@@ -474,12 +474,12 @@ export const PeerStatusLiteSchema = z.object({
    * TxBytes/RxBytes are the total number of bytes transmitted to/received
    * from this peer.
    */
-  TxBytes: int64.default(0),
+  TxBytes: int64.default(0n),
   /**
    * TxBytes/RxBytes are the total number of bytes transmitted to/received
    * from this peer.
    */
-  RxBytes: int64.default(0),
+  RxBytes: int64.default(0n),
   /**
    * LastHandshake is the last time a handshake succeeded with this peer. (Or
    * we got key confirmation via the first data message, which is
@@ -802,7 +802,7 @@ export type Resolver = z.infer<typeof ResolverSchema>;
 
 /** Node is a Tailscale device in a tailnet. */
 export const NodeSchema = z.object({
-  ID: int64.default(0),
+  ID: int64.default(0n),
   StableID: z.string().default(""),
   /**
    * Name is the FQDN of the node.
@@ -816,7 +816,7 @@ export const NodeSchema = z.object({
    * node then it doesn't reflect the ACL identity that the node is running
    * as.
    */
-  User: int64.default(0),
+  User: int64.default(0n),
   /** Sharer, if non-zero, is the user who shared this node, if different than User. */
   Sharer: int64.nullish(),
   Key: z.string().default(""),
@@ -1038,7 +1038,7 @@ export const DERPNodeSchema = z.object({
    * RegionID is the RegionID of the DERPRegion that this node
    * is running in.
    */
-  RegionID: int64.default(0),
+  RegionID: int64.default(0n),
   /**
    * HostName is the DERP node's hostname.
    * 
@@ -1136,7 +1136,7 @@ export const DERPRegionSchema = z.object({
    * RegionIDs in range 900-999 are reserved for end users to run their
    * own DERP nodes.
    */
-  RegionID: int64.default(0),
+  RegionID: int64.default(0n),
   /**
    * RegionCode is a short name for the region. It's usually a popular
    * city or airport code in the region: "nyc", "sf", "sin",
@@ -1247,8 +1247,8 @@ export const ProtoPortRangeSchema = z.object({
    * Proto is the IP protocol number.
    * If Proto is 0, it means TCP+UDP+ICMP(4+6).
    */
-  Proto: int64.default(0),
-  Ports: PortRangeSchema.default({}),
+  Proto: int64.default(0n),
+  Ports: PortRangeSchema.prefault({}),
 });
 export type ProtoPortRange = z.infer<typeof ProtoPortRangeSchema>;
 
@@ -1515,7 +1515,7 @@ export const PrefsSchema = z.object({
    * NetfilterMode specifies how much to manage netfilter rules for
    * Tailscale, if at all.
    */
-  NetfilterMode: int64.default(0),
+  NetfilterMode: int64.default(0n),
   /**
    * OperatorUser is the local machine user name who is allowed to
    * operate tailscaled without being root or using sudo.
@@ -1531,12 +1531,12 @@ export const PrefsSchema = z.object({
    * AutoUpdate sets the auto-update preferences for the node agent. See
    * AutoUpdatePrefs docs for more details.
    */
-  AutoUpdate: AutoUpdatePrefsSchema.default({}),
+  AutoUpdate: AutoUpdatePrefsSchema.prefault({}),
   /**
    * AppConnector sets the app connector preferences for the node agent. See
    * AppConnectorPrefs docs for more details.
    */
-  AppConnector: AppConnectorPrefsSchema.default({}),
+  AppConnector: AppConnectorPrefsSchema.prefault({}),
   /**
    * PostureChecking enables the collection of information used for device
    * posture checks.
@@ -1814,7 +1814,7 @@ export const MaskedPrefsSchema = z.object({
    * NetfilterMode specifies how much to manage netfilter rules for
    * Tailscale, if at all.
    */
-  NetfilterMode: int64.default(0),
+  NetfilterMode: int64.default(0n),
   /**
    * OperatorUser is the local machine user name who is allowed to
    * operate tailscaled without being root or using sudo.
@@ -1830,12 +1830,12 @@ export const MaskedPrefsSchema = z.object({
    * AutoUpdate sets the auto-update preferences for the node agent. See
    * AutoUpdatePrefs docs for more details.
    */
-  AutoUpdate: AutoUpdatePrefsSchema.default({}),
+  AutoUpdate: AutoUpdatePrefsSchema.prefault({}),
   /**
    * AppConnector sets the app connector preferences for the node agent. See
    * AppConnectorPrefs docs for more details.
    */
-  AppConnector: AppConnectorPrefsSchema.default({}),
+  AppConnector: AppConnectorPrefsSchema.prefault({}),
   /**
    * PostureChecking enables the collection of information used for device
    * posture checks.
@@ -1930,11 +1930,11 @@ export type MaskedPrefs = z.infer<typeof MaskedPrefsSchema>;
 
 /** EngineStatus contains WireGuard engine stats. */
 export const EngineStatusSchema = z.object({
-  RBytes: int64.default(0),
-  WBytes: int64.default(0),
-  NumLive: int64.default(0),
+  RBytes: int64.default(0n),
+  WBytes: int64.default(0n),
+  NumLive: int64.default(0n),
   /** number of active DERP connections */
-  LiveDERPs: int64.default(0),
+  LiveDERPs: int64.default(0n),
   LivePeers: goMap(PeerStatusLiteSchema),
 });
 export type EngineStatus = z.infer<typeof EngineStatusSchema>;
@@ -1946,9 +1946,9 @@ export const PartialFileSchema = z.object({
   /** time transfer started */
   Started: z.string().default(""),
   /** or -1 if unknown */
-  DeclaredSize: int64.default(0),
+  DeclaredSize: int64.default(0n),
   /** bytes copied thus far */
-  Received: int64.default(0),
+  Received: int64.default(0n),
   /**
    * PartialPath is set non-empty in "direct" file mode to the
    * in-progress '*.partial' file's path when the peerapi isn't
@@ -1976,9 +1976,9 @@ export const OutgoingFileSchema = z.object({
   /** time transfer started */
   Started: z.string().default(""),
   /** or -1 if unknown */
-  DeclaredSize: int64.default(0),
+  DeclaredSize: int64.default(0n),
   /** bytes copied thus far */
-  Sent: int64.default(0),
+  Sent: int64.default(0n),
   /** indicates whether or not the transfer finished */
   Finished: z.boolean().default(false),
   /** for a finished transfer, indicates whether or not it was successful */
@@ -2249,7 +2249,7 @@ export const LoginProfileSchema = z.object({
    * 
    * This field was added on 2023-11-17.
    */
-  NetworkProfile: NetworkProfileSchema.default({}),
+  NetworkProfile: NetworkProfileSchema.prefault({}),
   /**
    * Key is the StateKey under which the profile is stored.
    * It is assigned once at profile creation time and never changes.
@@ -2259,7 +2259,7 @@ export const LoginProfileSchema = z.object({
    * UserProfile is the server provided UserProfile for this profile.
    * This is updated whenever the server provides a new UserProfile.
    */
-  UserProfile: UserProfileSchema.default({}),
+  UserProfile: UserProfileSchema.prefault({}),
   /**
    * NodeID is the NodeID of the node that this profile is logged into.
    * This should be stable across tagging and untagging nodes.
@@ -2299,7 +2299,7 @@ export type WhoIsResponse = z.infer<typeof WhoIsResponseSchema>;
 
 export const WaitingFileSchema = z.object({
   Name: z.string().default(""),
-  Size: int64.default(0),
+  Size: int64.default(0n),
 });
 export type WaitingFile = z.infer<typeof WaitingFileSchema>;
 

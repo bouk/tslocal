@@ -60,7 +60,8 @@ func zodFieldExpr(fi FieldInfo, parentName string) string {
 	} else if fi.IsNestedStruct {
 		// Non-optional nested struct: Go always serializes with zero-value fields,
 		// but absent in partial data → default to empty object (inner fields have their own defaults).
-		expr += ".default({})"
+		// Use .prefault() so the empty object is parsed through the schema (applying inner defaults).
+		expr += ".prefault({})"
 	} else {
 		// Non-optional, non-omit primitive: add zero-value default matching
 		// Go's json.Unmarshal behavior for absent fields.
@@ -70,7 +71,7 @@ func zodFieldExpr(fi FieldInfo, parentName string) string {
 		case "number":
 			expr += ".default(0)"
 		case "bigint":
-			expr += ".default(0)"
+			expr += ".default(0n)"
 		case "boolean":
 			expr += ".default(false)"
 		}

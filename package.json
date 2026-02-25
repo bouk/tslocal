@@ -1,6 +1,6 @@
 {
   "name": "tslocalapi",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Client library for the Tailscale Local API",
   "type": "module",
   "main": "dist/index.js",
@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^3"
+    "zod": "^4"
   },
   "devDependencies": {
     "@types/node": "^25",

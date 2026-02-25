@@ -6,7 +6,7 @@ The libraries should use exact ports of the Go source, you can find the original
 
 ## Versioning
 
-All packages share the same version (currently **0.0.3**). Versions must be kept in lockstep across all three packages. The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1).
+All packages share the same version (currently **0.0.4**). Versions must be kept in lockstep across all three packages. The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1).
 
 Version is set in these files (all must match):
 - `Cargo.toml` — `version = "X.Y.Z"`
