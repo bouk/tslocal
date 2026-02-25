@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import http.client
 import io
 import json
@@ -79,7 +78,7 @@ class Transport:
                 pass
             self._conn = None
 
-    async def request(
+    def request(
         self,
         method: str,
         path: str,
@@ -97,22 +96,9 @@ class Transport:
         if headers:
             all_headers.update(headers)
 
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self._sync_request, method, path, body, all_headers
-        )
-
-    def _sync_request(
-        self,
-        method: str,
-        path: str,
-        body: bytes | None,
-        headers: dict[str, str],
-    ) -> tuple[int, bytes]:
-        """Synchronous HTTP request (run in executor for async)."""
         try:
             conn = self._get_connection()
-            conn.request(method, path, body=body, headers=headers)
+            conn.request(method, path, body=body, headers=all_headers)
             resp = conn.getresponse()
             data = resp.read()
             return resp.status, data
@@ -120,7 +106,7 @@ class Transport:
             # Connection broken, close and retry once
             self._close_connection()
             conn = self._get_connection()
-            conn.request(method, path, body=body, headers=headers)
+            conn.request(method, path, body=body, headers=all_headers)
             resp = conn.getresponse()
             data = resp.read()
             return resp.status, data

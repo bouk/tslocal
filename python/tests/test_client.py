@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import http.server
 import json
 import socket
@@ -105,8 +104,7 @@ def make_client(port: int) -> LocalClient:
     return LocalClient(tcp_port=port, token="test-token", use_socket_only=False)
 
 
-@pytest.mark.asyncio
-async def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/status": (
@@ -135,7 +133,7 @@ async def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     }
 
     client = make_client(port)
-    status = await client.status()
+    status = client.status()
     assert status.version == "1.94.1"
     assert status.backend_state == "Running"
     assert status.self_node is not None
@@ -143,8 +141,7 @@ async def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_status_without_peers(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_status_without_peers(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/status?peers=false": (
@@ -160,13 +157,12 @@ async def test_status_without_peers(mock_server: tuple[http.server.HTTPServer, i
     }
 
     client = make_client(port)
-    status = await client.status_without_peers()
+    status = client.status_without_peers()
     assert status.version == "1.94.1"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_whois_not_found(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_whois_not_found(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/whois?addr=1.2.3.4": (404, {"error": "peer not found"}),
@@ -174,12 +170,11 @@ async def test_whois_not_found(mock_server: tuple[http.server.HTTPServer, int]) 
 
     client = make_client(port)
     with pytest.raises(PeerNotFoundError):
-        await client.who_is("1.2.3.4")
+        client.who_is("1.2.3.4")
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_access_denied(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_access_denied(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/status": (403, {"error": "access denied"}),
@@ -187,12 +182,11 @@ async def test_access_denied(mock_server: tuple[http.server.HTTPServer, int]) ->
 
     client = make_client(port)
     with pytest.raises(AccessDeniedError):
-        await client.status()
+        client.status()
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_preconditions_failed(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_preconditions_failed(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/status": (412, {"error": "state mismatch"}),
@@ -200,12 +194,11 @@ async def test_preconditions_failed(mock_server: tuple[http.server.HTTPServer, i
 
     client = make_client(port)
     with pytest.raises(PreconditionsFailedError):
-        await client.status()
+        client.status()
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_http_error(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_http_error(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/status": (500, {"error": "internal error"}),
@@ -213,13 +206,12 @@ async def test_http_error(mock_server: tuple[http.server.HTTPServer, int]) -> No
 
     client = make_client(port)
     with pytest.raises(HttpError) as exc_info:
-        await client.status()
+        client.status()
     assert exc_info.value.status == 500
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_get_prefs(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_get_prefs(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/prefs": (
@@ -241,14 +233,13 @@ async def test_get_prefs(mock_server: tuple[http.server.HTTPServer, int]) -> Non
     }
 
     client = make_client(port)
-    prefs = await client.get_prefs()
+    prefs = client.get_prefs()
     assert prefs.control_url == "https://controlplane.tailscale.com"
     assert prefs.want_running is True
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_auth_header_sent(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_auth_header_sent(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     """Verify that the auth token is sent as Basic auth."""
     _, port = mock_server
     received_auth: list[str] = []
@@ -267,7 +258,7 @@ async def test_auth_header_sent(mock_server: tuple[http.server.HTTPServer, int])
 
     try:
         client = make_client(port)
-        await client.status()
+        client.status()
         assert len(received_auth) > 0
         assert received_auth[0].startswith("Basic ")
         client.close()
@@ -278,8 +269,7 @@ async def test_auth_header_sent(mock_server: tuple[http.server.HTTPServer, int])
 # --- Ping ---
 
 
-@pytest.mark.asyncio
-async def test_ping(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_ping(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/ping?ip=100.64.0.1&type=disco&size=0": (
@@ -298,7 +288,7 @@ async def test_ping(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     }
 
     client = make_client(port)
-    result = await client.ping("100.64.0.1")
+    result = client.ping("100.64.0.1")
     assert result.ip == "100.64.0.1"
     assert result.node_name == "myhost"
     assert result.latency_seconds == 0.005
@@ -306,8 +296,7 @@ async def test_ping(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_ping_with_opts(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_ping_with_opts(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/ping?ip=100.64.0.1&type=TSMP&size=512": (
@@ -323,7 +312,7 @@ async def test_ping_with_opts(mock_server: tuple[http.server.HTTPServer, int]) -
     }
 
     client = make_client(port)
-    result = await client.ping_with_opts("100.64.0.1", "TSMP", size=512)
+    result = client.ping_with_opts("100.64.0.1", "TSMP", size=512)
     assert result.latency_seconds == 0.01
     client.close()
 
@@ -331,8 +320,7 @@ async def test_ping_with_opts(mock_server: tuple[http.server.HTTPServer, int]) -
 # --- DERP ---
 
 
-@pytest.mark.asyncio
-async def test_current_derp_map(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_current_derp_map(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/derpmap": (
@@ -351,7 +339,7 @@ async def test_current_derp_map(mock_server: tuple[http.server.HTTPServer, int])
     }
 
     client = make_client(port)
-    derp_map = await client.current_derp_map()
+    derp_map = client.current_derp_map()
     assert "1" in derp_map.regions
     assert derp_map.regions["1"].region_code == "nyc"
     client.close()
@@ -360,8 +348,7 @@ async def test_current_derp_map(mock_server: tuple[http.server.HTTPServer, int])
 # --- Certificates ---
 
 
-@pytest.mark.asyncio
-async def test_cert_pair(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_cert_pair(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     key_pem = b"-----BEGIN PRIVATE KEY-----\nfakekey\n-----END PRIVATE KEY--"
     cert_pem = b"---BEGIN CERTIFICATE-----\nfakecert\n-----END CERTIFICATE-----"
@@ -374,7 +361,7 @@ async def test_cert_pair(mock_server: tuple[http.server.HTTPServer, int]) -> Non
     }
 
     client = make_client(port)
-    cert, key = await client.cert_pair("example.ts.net")
+    cert, key = client.cert_pair("example.ts.net")
     assert b"CERTIFICATE" in cert
     assert b"PRIVATE KEY" in key
     client.close()
@@ -383,113 +370,104 @@ async def test_cert_pair(mock_server: tuple[http.server.HTTPServer, int]) -> Non
 # --- Diagnostics ---
 
 
-@pytest.mark.asyncio
-async def test_check_ip_forwarding_no_warning(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_check_ip_forwarding_no_warning(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/check-ip-forwarding": (200, {"Warning": ""}),
     }
 
     client = make_client(port)
-    result = await client.check_ip_forwarding()
+    result = client.check_ip_forwarding()
     assert result is None
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_check_ip_forwarding_with_warning(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_check_ip_forwarding_with_warning(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/check-ip-forwarding": (200, {"Warning": "IP forwarding is disabled"}),
     }
 
     client = make_client(port)
-    result = await client.check_ip_forwarding()
+    result = client.check_ip_forwarding()
     assert result == "IP forwarding is disabled"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_check_udp_gro_forwarding(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_check_udp_gro_forwarding(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/check-udp-gro-forwarding": (200, {"Warning": ""}),
     }
 
     client = make_client(port)
-    result = await client.check_udp_gro_forwarding()
+    result = client.check_udp_gro_forwarding()
     assert result is None
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_check_so_mark_in_use(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_check_so_mark_in_use(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/check-so-mark-in-use": (200, {"useSoMark": True}),
     }
 
     client = make_client(port)
-    result = await client.check_so_mark_in_use()
+    result = client.check_so_mark_in_use()
     assert result is True
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_daemon_metrics(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_daemon_metrics(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/metrics": (200, "tailscaled_inbound_bytes_total 1234"),
     }
 
     client = make_client(port)
-    metrics = await client.daemon_metrics()
+    metrics = client.daemon_metrics()
     assert "tailscaled_inbound_bytes_total" in metrics
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_goroutines(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_goroutines(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/goroutines": (200, "goroutine 1 [running]:"),
     }
 
     client = make_client(port)
-    output = await client.goroutines()
+    output = client.goroutines()
     assert "goroutine" in output
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_pprof(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_pprof(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/pprof?name=heap&seconds=30": (200, b"pprof-data"),
     }
 
     client = make_client(port)
-    data = await client.pprof("heap", 30)
+    data = client.pprof("heap", 30)
     assert data == b"pprof-data"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_query_feature(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_query_feature(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/query-feature?feature=serve": (200, {"Complete": True}),
     }
 
     client = make_client(port)
-    result = await client.query_feature("serve")
+    result = client.query_feature("serve")
     assert result["Complete"] is True
     assert MockHandler.last_method == "POST"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_check_update(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_check_update(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/update/check": (
@@ -499,13 +477,12 @@ async def test_check_update(mock_server: tuple[http.server.HTTPServer, int]) -> 
     }
 
     client = make_client(port)
-    result = await client.check_update()
+    result = client.check_update()
     assert result.running_latest is True
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_id_token(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_id_token(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/id-token?aud=https%3A//example.com": (
@@ -515,7 +492,7 @@ async def test_id_token(mock_server: tuple[http.server.HTTPServer, int]) -> None
     }
 
     client = make_client(port)
-    result = await client.id_token("https://example.com")
+    result = client.id_token("https://example.com")
     assert result["IDToken"] == "fake-token"
     client.close()
 
@@ -523,8 +500,7 @@ async def test_id_token(mock_server: tuple[http.server.HTTPServer, int]) -> None
 # --- Taildrop ---
 
 
-@pytest.mark.asyncio
-async def test_waiting_files(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_waiting_files(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/files/?waitsec=0": (
@@ -534,28 +510,26 @@ async def test_waiting_files(mock_server: tuple[http.server.HTTPServer, int]) ->
     }
 
     client = make_client(port)
-    files = await client.waiting_files()
+    files = client.waiting_files()
     assert len(files) == 1
     assert files[0].name == "hello.txt"
     assert files[0].size == 42
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_delete_waiting_file(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_delete_waiting_file(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/files/hello.txt": (200, ""),
     }
 
     client = make_client(port)
-    await client.delete_waiting_file("hello.txt")
+    client.delete_waiting_file("hello.txt")
     assert MockHandler.last_method == "DELETE"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_file_targets(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_file_targets(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/file-targets": (
@@ -565,21 +539,20 @@ async def test_file_targets(mock_server: tuple[http.server.HTTPServer, int]) -> 
     }
 
     client = make_client(port)
-    targets = await client.file_targets()
+    targets = client.file_targets()
     assert len(targets) == 1
     assert targets[0].peer_api_url == "http://100.64.0.2:1234"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_push_file(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_push_file(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/file-put/stable-id-123/test.txt": (200, ""),
     }
 
     client = make_client(port)
-    await client.push_file("stable-id-123", "test.txt", b"file content")
+    client.push_file("stable-id-123", "test.txt", b"file content")
     assert MockHandler.last_method == "PUT"
     assert MockHandler.last_body == b"file content"
     client.close()
@@ -588,8 +561,7 @@ async def test_push_file(mock_server: tuple[http.server.HTTPServer, int]) -> Non
 # --- Taildrive ---
 
 
-@pytest.mark.asyncio
-async def test_drive_share_list(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_drive_share_list(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/drive/shares": (
@@ -599,51 +571,48 @@ async def test_drive_share_list(mock_server: tuple[http.server.HTTPServer, int])
     }
 
     client = make_client(port)
-    shares = await client.drive_share_list()
+    shares = client.drive_share_list()
     assert len(shares) == 1
     assert shares[0]["Name"] == "photos"
     assert MockHandler.last_method == "GET"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_drive_share_set(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_drive_share_set(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/drive/shares": (200, ""),
     }
 
     client = make_client(port)
-    await client.drive_share_set({"Name": "photos", "Path": "/home/user/photos"})
+    client.drive_share_set({"Name": "photos", "Path": "/home/user/photos"})
     assert MockHandler.last_method == "PUT"
     body = json.loads(MockHandler.last_body)
     assert body["Name"] == "photos"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_drive_share_remove(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_drive_share_remove(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/drive/shares": (200, ""),
     }
 
     client = make_client(port)
-    await client.drive_share_remove("photos")
+    client.drive_share_remove("photos")
     assert MockHandler.last_method == "DELETE"
     assert MockHandler.last_body == b"photos"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_drive_share_rename(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_drive_share_rename(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/drive/shares": (200, ""),
     }
 
     client = make_client(port)
-    await client.drive_share_rename("old-name", "new-name")
+    client.drive_share_rename("old-name", "new-name")
     assert MockHandler.last_method == "POST"
     body = json.loads(MockHandler.last_body)
     assert body == ["old-name", "new-name"]
@@ -653,28 +622,26 @@ async def test_drive_share_rename(mock_server: tuple[http.server.HTTPServer, int
 # --- Network Lock ---
 
 
-@pytest.mark.asyncio
-async def test_network_lock_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_network_lock_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/tka/status": (200, {"Enabled": False, "PublicKey": ""}),
     }
 
     client = make_client(port)
-    result = await client.network_lock_status()
+    result = client.network_lock_status()
     assert result["Enabled"] is False
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_network_lock_force_local_disable(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_network_lock_force_local_disable(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/tka/force-local-disable": (200, ""),
     }
 
     client = make_client(port)
-    await client.network_lock_force_local_disable()
+    client.network_lock_force_local_disable()
     assert MockHandler.last_method == "POST"
     assert MockHandler.last_body == b"{}"
     client.close()
@@ -683,29 +650,27 @@ async def test_network_lock_force_local_disable(mock_server: tuple[http.server.H
 # --- Metrics ---
 
 
-@pytest.mark.asyncio
-async def test_increment_counter(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_increment_counter(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/upload-client-metrics": (200, ""),
     }
 
     client = make_client(port)
-    await client.increment_counter("my_counter", 5)
+    client.increment_counter("my_counter", 5)
     body = json.loads(MockHandler.last_body)
     assert body == [{"Name": "my_counter", "Type": "counter", "Value": 5}]
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_set_gauge(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_set_gauge(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/upload-client-metrics": (200, ""),
     }
 
     client = make_client(port)
-    await client.set_gauge("my_gauge", 42)
+    client.set_gauge("my_gauge", 42)
     body = json.loads(MockHandler.last_body)
     assert body == [{"Name": "my_gauge", "Type": "gauge", "Value": 42, "Op": "set"}]
     client.close()
@@ -714,21 +679,19 @@ async def test_set_gauge(mock_server: tuple[http.server.HTTPServer, int]) -> Non
 # --- Debug ---
 
 
-@pytest.mark.asyncio
-async def test_debug_action(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_debug_action(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/debug?action=rebind": (200, ""),
     }
 
     client = make_client(port)
-    await client.debug_action("rebind")
+    client.debug_action("rebind")
     assert MockHandler.last_method == "POST"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_debug_packet_filter_rules(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_debug_packet_filter_rules(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/debug-packet-filter-rules": (
@@ -738,7 +701,7 @@ async def test_debug_packet_filter_rules(mock_server: tuple[http.server.HTTPServ
     }
 
     client = make_client(port)
-    rules = await client.debug_packet_filter_rules()
+    rules = client.debug_packet_filter_rules()
     assert len(rules) == 1
     assert MockHandler.last_method == "POST"
     client.close()
@@ -747,34 +710,31 @@ async def test_debug_packet_filter_rules(mock_server: tuple[http.server.HTTPServ
 # --- System ---
 
 
-@pytest.mark.asyncio
-async def test_bug_report(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_bug_report(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/bugreport?note=test%20note": (200, "BUG-12345\n"),
     }
 
     client = make_client(port)
-    marker = await client.bug_report("test note")
+    marker = client.bug_report("test note")
     assert marker == "BUG-12345"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_reload_config_success(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_reload_config_success(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/reload-config": (200, {"Reloaded": True, "Err": ""}),
     }
 
     client = make_client(port)
-    result = await client.reload_config()
+    result = client.reload_config()
     assert result is True
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_reload_config_error(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_reload_config_error(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/reload-config": (200, {"Reloaded": False, "Err": "config not found"}),
@@ -782,20 +742,19 @@ async def test_reload_config_error(mock_server: tuple[http.server.HTTPServer, in
 
     client = make_client(port)
     with pytest.raises(HttpError) as exc_info:
-        await client.reload_config()
+        client.reload_config()
     assert "config not found" in str(exc_info.value)
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_reload_config_no_config(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_reload_config_no_config(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/reload-config": (200, {"Reloaded": False, "Err": ""}),
     }
 
     client = make_client(port)
-    result = await client.reload_config()
+    result = client.reload_config()
     assert result is False
     client.close()
 
@@ -803,8 +762,7 @@ async def test_reload_config_no_config(mock_server: tuple[http.server.HTTPServer
 # --- Exit Node ---
 
 
-@pytest.mark.asyncio
-async def test_suggest_exit_node(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_suggest_exit_node(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/suggest-exit-node": (
@@ -814,7 +772,7 @@ async def test_suggest_exit_node(mock_server: tuple[http.server.HTTPServer, int]
     }
 
     client = make_client(port)
-    result = await client.suggest_exit_node()
+    result = client.suggest_exit_node()
     assert result.id == "stable-123"
     assert result.name == "us-exit"
     client.close()
@@ -823,8 +781,7 @@ async def test_suggest_exit_node(mock_server: tuple[http.server.HTTPServer, int]
 # --- DNS ---
 
 
-@pytest.mark.asyncio
-async def test_query_dns(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_query_dns(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/dns-query?name=example.com&type=A": (
@@ -834,13 +791,12 @@ async def test_query_dns(mock_server: tuple[http.server.HTTPServer, int]) -> Non
     }
 
     client = make_client(port)
-    result = await client.query_dns("example.com", "A")
+    result = client.query_dns("example.com", "A")
     assert result["Bytes"] == "AAAA"
     client.close()
 
 
-@pytest.mark.asyncio
-async def test_get_dns_os_config(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_get_dns_os_config(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/dns-osconfig": (
@@ -850,7 +806,7 @@ async def test_get_dns_os_config(mock_server: tuple[http.server.HTTPServer, int]
     }
 
     client = make_client(port)
-    result = await client.get_dns_os_config()
+    result = client.get_dns_os_config()
     assert result.nameservers == ["8.8.8.8"]
     assert result.search_domains == ["ts.net"]
     client.close()
@@ -859,8 +815,7 @@ async def test_get_dns_os_config(mock_server: tuple[http.server.HTTPServer, int]
 # --- Optional Features ---
 
 
-@pytest.mark.asyncio
-async def test_query_optional_features(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_query_optional_features(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/debug-optional-features": (
@@ -870,7 +825,7 @@ async def test_query_optional_features(mock_server: tuple[http.server.HTTPServer
     }
 
     client = make_client(port)
-    result = await client.query_optional_features()
+    result = client.query_optional_features()
     assert result.features["serve"] is True
     assert result.features["funnel"] is False
     assert MockHandler.last_method == "POST"
@@ -880,8 +835,7 @@ async def test_query_optional_features(mock_server: tuple[http.server.HTTPServer
 # --- Context Manager ---
 
 
-@pytest.mark.asyncio
-async def test_context_manager(mock_server: tuple[http.server.HTTPServer, int]) -> None:
+def test_context_manager(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     _, port = mock_server
     MockHandler.responses = {
         "/localapi/v0/status": (
@@ -890,6 +844,6 @@ async def test_context_manager(mock_server: tuple[http.server.HTTPServer, int]) 
         ),
     }
 
-    async with make_client(port) as client:
-        status = await client.status()
+    with make_client(port) as client:
+        status = client.status()
         assert status.version == "1.94.1"

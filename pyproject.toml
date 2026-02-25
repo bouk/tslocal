@@ -8,7 +8,6 @@ dependencies = ["msgspec>=0.18"]
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
-    "pytest-asyncio>=0.24",
 ]
 
 [build-system]
@@ -19,7 +18,6 @@ build-backend = "hatchling.build"
 packages = ["python/src/tslocalapi"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 testpaths = ["python/tests"]
 
 [tool.ty.environment]

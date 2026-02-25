@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncIterator
+from typing import Any, Iterator
 
 
 class Notify:
@@ -53,10 +53,10 @@ class NotifyWatchOpt:
 
 
 class IPNBusWatcher:
-    """Async iterator over IPN bus notifications.
+    """Iterator over IPN bus notifications.
 
     Usage:
-        async for notify in watcher:
+        for notify in watcher:
             print(notify.state)
     """
 
@@ -65,7 +65,7 @@ class IPNBusWatcher:
         self._closed = False
         self._buffer = b""
 
-    async def next(self) -> Notify:
+    def next(self) -> Notify:
         """Get the next notification."""
         while True:
             # Check for complete JSON line in buffer
@@ -78,21 +78,21 @@ class IPNBusWatcher:
                 continue
 
             if self._closed:
-                raise StopAsyncIteration
+                raise StopIteration
 
-            chunk = await self._reader.read(4096)
+            chunk = self._reader.read(4096)
             if not chunk:
-                raise StopAsyncIteration
+                raise StopIteration
             self._buffer += chunk
 
-    async def close(self) -> None:
+    def close(self) -> None:
         """Close the watcher."""
         self._closed = True
         if hasattr(self._reader, "close"):
             self._reader.close()
 
-    def __aiter__(self) -> AsyncIterator[Notify]:
+    def __iter__(self) -> Iterator[Notify]:
         return self
 
-    async def __anext__(self) -> Notify:
-        return await self.next()
+    def __next__(self) -> Notify:
+        return self.next()
