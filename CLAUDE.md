@@ -6,7 +6,7 @@ The libraries should use exact ports of the Go source, you can find the original
 
 ## Versioning
 
-Package versions track the Tailscale release they target, currently **1.94.1** (matching `tailscale/` checkout at v1.94.1).
+Package versions are independently versioned (currently **0.0.1**). The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1).
 
 ## Project Structure
 
