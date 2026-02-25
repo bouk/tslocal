@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import time
 from typing import Any
 from urllib.parse import quote
 
@@ -20,20 +19,7 @@ from tslocalapi._errors import (
 )
 from tslocalapi._transport import Transport
 from tslocalapi._types import (
-    ClientVersion,
-    DERPMap,
-    DNSOSConfig,
-    ExitNodeSuggestionResponse,
-    FileTarget,
-    LoginProfile,
-    MaskedPrefs,
-    OptionalFeatures,
-    PingResult,
-    Prefs,
-    ProfileStatus,
-    ReloadConfigResponse,
     Status,
-    WaitingFile,
     WhoIsResponse,
 )
 
@@ -134,200 +120,23 @@ class LocalClient:
         """Look up a peer by node key."""
         return self.who_is(node_key)
 
-    # --- Auth ---
+    def who_is_proto(self, proto: str, remote_addr: str) -> WhoIsResponse:
+        """Look up the owner of an IP address with a specific protocol.
 
-    def start_login_interactive(self) -> None:
-        """Start an interactive login flow."""
-        self._post200("/localapi/v0/login-interactive")
-
-    def logout(self) -> None:
-        """Log out the current node."""
-        self._post200("/localapi/v0/logout")
-
-    # --- Prefs ---
-
-    def get_prefs(self) -> Prefs:
-        """Get current prefs."""
-        data = self._get200("/localapi/v0/prefs")
-        return msgspec.json.decode(data, type=Prefs)
-
-    def edit_prefs(self, prefs: MaskedPrefs) -> Prefs:
-        """Edit prefs with a MaskedPrefs patch."""
-        body = msgspec.json.encode(prefs)
-        data = self._do_request_nice("PATCH", "/localapi/v0/prefs", body)
-        return msgspec.json.decode(data, type=Prefs)
-
-    def check_prefs(self, prefs: Prefs) -> None:
-        """Validate prefs without making changes."""
-        body = msgspec.json.encode(prefs)
-        self._post200("/localapi/v0/check-prefs", body)
-
-    # --- Profiles ---
-
-    def profile_status(self) -> ProfileStatus:
-        """Get profile status (current profile and all profiles)."""
-        data = self._get200("/localapi/v0/profiles/current")
-        return msgspec.json.decode(data, type=ProfileStatus)
-
-    def switch_profile(self, profile_id: str) -> None:
-        """Switch to the profile with the given ID."""
-        self._post200(f"/localapi/v0/profiles/{quote(profile_id)}")
-
-    def switch_to_empty_profile(self) -> None:
-        """Switch to an empty (new) profile."""
-        self._do_request_nice("PUT", "/localapi/v0/profiles/")
-
-    def delete_profile(self, profile_id: str) -> None:
-        """Delete the profile with the given ID."""
-        self._do_request_nice(
-            "DELETE", f"/localapi/v0/profiles/{quote(profile_id)}"
+        The proto parameter should be "tcp" or "udp".
+        """
+        status, body = self._do_request(
+            "GET",
+            f"/localapi/v0/whois?proto={quote(proto)}&addr={quote(remote_addr)}",
         )
-
-    # --- DNS ---
-
-    def set_dns(self, name: str, value: str) -> None:
-        """Set a DNS record."""
-        self._post200(
-            f"/localapi/v0/dns?name={quote(name)}&value={quote(value)}"
-        )
-
-    def query_dns(self, name: str, query_type: str) -> dict[str, Any]:
-        """Query DNS for a name with the given query type."""
-        data = self._get200(
-            f"/localapi/v0/dns-query?name={quote(name)}&type={quote(query_type)}"
-        )
-        return json.loads(data)
-
-    def get_dns_os_config(self) -> DNSOSConfig:
-        """Get the OS DNS configuration."""
-        data = self._get200("/localapi/v0/dns-osconfig")
-        return msgspec.json.decode(data, type=DNSOSConfig)
-
-    # --- Diagnostics ---
-
-    def check_ip_forwarding(self) -> str | None:
-        """Check IP forwarding status. Returns warning string if any."""
-        data = self._get200("/localapi/v0/check-ip-forwarding")
-        result: dict[str, Any] = json.loads(data)
-        warning = result.get("Warning", "")
-        return warning if warning else None
-
-    def check_udp_gro_forwarding(self) -> str | None:
-        """Check UDP GRO forwarding status. Returns warning string if any."""
-        data = self._get200("/localapi/v0/check-udp-gro-forwarding")
-        result: dict[str, Any] = json.loads(data)
-        warning = result.get("Warning", "")
-        return warning if warning else None
-
-    def check_reverse_path_filtering(self) -> str | None:
-        """Check reverse path filtering status. Returns warning string if any."""
-        data = self._get200("/localapi/v0/check-reverse-path-filtering")
-        result: dict[str, Any] = json.loads(data)
-        warning = result.get("Warning", "")
-        return warning if warning else None
-
-    def set_udp_gro_forwarding(self) -> str | None:
-        """Set UDP GRO forwarding. Returns warning string if any."""
-        data = self._get200("/localapi/v0/set-udp-gro-forwarding")
-        result: dict[str, Any] = json.loads(data)
-        warning = result.get("Warning", "")
-        return warning if warning else None
-
-    def check_so_mark_in_use(self) -> bool:
-        """Check if SO_MARK is in use (Linux-only)."""
-        data = self._get200("/localapi/v0/check-so-mark-in-use")
-        result: dict[str, Any] = json.loads(data)
-        return bool(result.get("useSoMark", False))
-
-    def daemon_metrics(self) -> str:
-        """Get daemon metrics in Prometheus format."""
-        data = self._get200("/localapi/v0/metrics")
-        return data.decode()
-
-    def user_metrics(self) -> str:
-        """Get user metrics in Prometheus format."""
-        data = self._get200("/localapi/v0/usermetrics")
-        return data.decode()
-
-    def goroutines(self) -> str:
-        """Get goroutine dump."""
-        data = self._get200("/localapi/v0/goroutines")
-        return data.decode()
-
-    def pprof(self, pprof_type: str, secs: int) -> bytes:
-        """Get pprof profile data."""
-        data = self._get200(
-            f"/localapi/v0/pprof?name={quote(pprof_type)}&seconds={secs}"
-        )
-        return data
-
-    def get_app_connector_route_info(self) -> dict[str, Any]:
-        """Get AppConnector route information."""
-        data = self._get200("/localapi/v0/appc-route-info")
-        return json.loads(data)
-
-    def query_feature(self, feature: str) -> dict[str, Any]:
-        """Query a feature (e.g. 'serve', 'funnel')."""
-        data = self._post200(
-            f"/localapi/v0/query-feature?feature={quote(feature)}"
-        )
-        return json.loads(data)
-
-    def query_optional_features(self) -> OptionalFeatures:
-        """Query supported optional features."""
-        data = self._post200("/localapi/v0/debug-optional-features")
-        return msgspec.json.decode(data, type=OptionalFeatures)
-
-    def check_update(self) -> ClientVersion:
-        """Check for available updates."""
-        data = self._get200("/localapi/v0/update/check")
-        return msgspec.json.decode(data, type=ClientVersion)
-
-    def id_token(self, aud: str) -> dict[str, Any]:
-        """Get an OIDC ID token for the given audience."""
-        data = self._get200(f"/localapi/v0/id-token?aud={quote(aud)}")
-        return json.loads(data)
-
-    def disconnect_control(self) -> None:
-        """Disconnect from the control server."""
-        self._post200("/localapi/v0/disconnect-control")
-
-    # --- Ping ---
-
-    def ping(self, ip: str, ping_type: str = "disco") -> PingResult:
-        """Ping a Tailscale IP address."""
-        data = self._post200(
-            f"/localapi/v0/ping?ip={quote(ip)}&type={quote(ping_type)}&size=0"
-        )
-        return msgspec.json.decode(data, type=PingResult)
-
-    def ping_with_opts(
-        self, ip: str, ping_type: str, size: int = 0
-    ) -> PingResult:
-        """Ping a Tailscale IP address with options."""
-        data = self._post200(
-            f"/localapi/v0/ping?ip={quote(ip)}&type={quote(ping_type)}&size={size}"
-        )
-        return msgspec.json.decode(data, type=PingResult)
-
-    # --- DERP ---
-
-    def current_derp_map(self) -> DERPMap:
-        """Get the current DERP map."""
-        data = self._get200("/localapi/v0/derpmap")
-        return msgspec.json.decode(data, type=DERPMap)
-
-    def debug_derp_region(self, region_id_or_code: str) -> dict[str, Any]:
-        """Debug a DERP region."""
-        data = self._post200(
-            f"/localapi/v0/debug-derp-region?region={quote(region_id_or_code)}"
-        )
-        return json.loads(data)
-
-    def debug_peer_relay_sessions(self) -> dict[str, Any]:
-        """Get debug peer relay sessions."""
-        data = self._get200("/localapi/v0/debug-peer-relay-sessions")
-        return json.loads(data)
+        if status == 404:
+            raise PeerNotFoundError(f"peer not found: {remote_addr}")
+        if status != 200:
+            msg = error_message_from_body(body) or body.decode("utf-8", errors="replace")
+            if status == 403:
+                raise AccessDeniedError(msg)
+            raise HttpError(status, msg)
+        return msgspec.json.decode(body, type=WhoIsResponse)
 
     # --- Certificates ---
 
@@ -372,269 +181,12 @@ class LocalClient:
             "POST", "/localapi/v0/serve-config", body, headers
         )
 
-    # --- Exit Node ---
+    # --- ID Token ---
 
-    def set_use_exit_node(self, enabled: bool) -> None:
-        """Enable or disable the exit node."""
-        val = "true" if enabled else "false"
-        self._post200(f"/localapi/v0/set-use-exit-node-enabled?enabled={val}")
-
-    def suggest_exit_node(self) -> ExitNodeSuggestionResponse:
-        """Get a suggested exit node."""
-        data = self._get200("/localapi/v0/suggest-exit-node")
-        return msgspec.json.decode(data, type=ExitNodeSuggestionResponse)
-
-    # --- Taildrop (File Sharing) ---
-
-    def waiting_files(self) -> list[WaitingFile]:
-        """Get the list of waiting files."""
-        data = self._get200("/localapi/v0/files/?waitsec=0")
-        return msgspec.json.decode(data, type=list[WaitingFile])
-
-    def await_waiting_files(self, wait_secs: int) -> list[WaitingFile]:
-        """Wait for files and return them. Blocks up to wait_secs."""
-        data = self._get200(f"/localapi/v0/files/?waitsec={wait_secs}")
-        return msgspec.json.decode(data, type=list[WaitingFile])
-
-    def delete_waiting_file(self, base_name: str) -> None:
-        """Delete a waiting file by name."""
-        self._do_request_nice(
-            "DELETE", f"/localapi/v0/files/{quote(base_name)}"
-        )
-
-    def file_targets(self) -> list[FileTarget]:
-        """Get the list of file targets (peers that can receive files)."""
-        data = self._get200("/localapi/v0/file-targets")
-        return msgspec.json.decode(data, type=list[FileTarget])
-
-    def push_file(self, target: str, name: str, data: bytes) -> None:
-        """Send a file to a target peer."""
-        self._do_request_nice(
-            "PUT", f"/localapi/v0/file-put/{quote(target)}/{quote(name)}", data
-        )
-
-    # --- Taildrive (Drive Shares) ---
-
-    def drive_share_list(self) -> list[dict[str, Any]]:
-        """List drive shares."""
-        data = self._get200("/localapi/v0/drive/shares")
+    def id_token(self, aud: str) -> dict[str, Any]:
+        """Get an OIDC ID token for the given audience."""
+        data = self._get200(f"/localapi/v0/id-token?aud={quote(aud)}")
         return json.loads(data)
-
-    def drive_share_set(self, share: dict[str, Any]) -> None:
-        """Set a drive share."""
-        body = json.dumps(share).encode()
-        self._do_request_nice("PUT", "/localapi/v0/drive/shares", body)
-
-    def drive_share_remove(self, name: str) -> None:
-        """Remove a drive share by name."""
-        self._do_request_nice(
-            "DELETE", "/localapi/v0/drive/shares", name.encode()
-        )
-
-    def drive_share_rename(self, old_name: str, new_name: str) -> None:
-        """Rename a drive share."""
-        body = json.dumps([old_name, new_name]).encode()
-        self._post200("/localapi/v0/drive/shares", body)
-
-    def drive_set_server_addr(self, addr: str) -> None:
-        """Set the drive fileserver address."""
-        self._do_request_nice(
-            "PUT", "/localapi/v0/drive/fileserver-address", addr.encode()
-        )
-
-    # --- Network Lock ---
-
-    def network_lock_status(self) -> dict[str, Any]:
-        """Get network lock status."""
-        data = self._get200("/localapi/v0/tka/status")
-        return json.loads(data)
-
-    def network_lock_init(
-        self,
-        keys: Any,
-        disablement_values: list[list[int]],
-        support_disablement: list[int],
-    ) -> dict[str, Any]:
-        """Initialize network lock."""
-        body = json.dumps(
-            {
-                "Keys": keys,
-                "DisablementValues": disablement_values,
-                "SupportDisablement": support_disablement,
-            }
-        ).encode()
-        data = self._post200("/localapi/v0/tka/init", body)
-        return json.loads(data)
-
-    def network_lock_wrap_preauth_key(
-        self, ts_key: str, tka_key: str
-    ) -> str:
-        """Wrap a preauth key with network lock."""
-        body = json.dumps({"TSKey": ts_key, "TKAKey": tka_key}).encode()
-        data = self._post200("/localapi/v0/tka/wrap-preauth-key", body)
-        return data.decode()
-
-    def network_lock_modify(
-        self, add_keys: Any, remove_keys: Any
-    ) -> None:
-        """Modify network lock keys."""
-        body = json.dumps(
-            {"AddKeys": add_keys, "RemoveKeys": remove_keys}
-        ).encode()
-        self._post200("/localapi/v0/tka/modify", body)
-
-    def network_lock_sign(
-        self, node_key: str, rotation_public: list[int]
-    ) -> None:
-        """Sign a node key for network lock."""
-        body = json.dumps(
-            {"NodeKey": node_key, "RotationPublic": rotation_public}
-        ).encode()
-        self._post200("/localapi/v0/tka/sign", body)
-
-    def network_lock_affected_sigs(
-        self, key_id: bytes
-    ) -> dict[str, Any]:
-        """Get affected signatures for a key ID."""
-        data = self._post200("/localapi/v0/tka/affected-sigs", key_id)
-        return json.loads(data)
-
-    def network_lock_log(self, max_entries: int) -> dict[str, Any]:
-        """Get network lock log entries."""
-        data = self._get200(f"/localapi/v0/tka/log?limit={max_entries}")
-        return json.loads(data)
-
-    def network_lock_force_local_disable(self) -> None:
-        """Force local disable of network lock."""
-        self._post200("/localapi/v0/tka/force-local-disable", b"{}")
-
-    def network_lock_verify_signing_deeplink(
-        self, url: str
-    ) -> dict[str, Any]:
-        """Verify a network lock signing deeplink."""
-        body = json.dumps({"URL": url}).encode()
-        data = self._post200("/localapi/v0/tka/verify-deeplink", body)
-        return json.loads(data)
-
-    def network_lock_gen_recovery_aum(
-        self, remove_keys: Any, fork_from: str
-    ) -> bytes:
-        """Generate a recovery AUM."""
-        body = json.dumps(
-            {"Keys": remove_keys, "ForkFrom": fork_from}
-        ).encode()
-        return self._post200(
-            "/localapi/v0/tka/generate-recovery-aum", body
-        )
-
-    def network_lock_cosign_recovery_aum(self, aum: bytes) -> bytes:
-        """Cosign a recovery AUM."""
-        return self._post200("/localapi/v0/tka/cosign-recovery-aum", aum)
-
-    def network_lock_submit_recovery_aum(self, aum: bytes) -> None:
-        """Submit a recovery AUM."""
-        self._post200("/localapi/v0/tka/submit-recovery-aum", aum)
-
-    def network_lock_disable(self, secret: bytes) -> None:
-        """Disable network lock with a disablement secret."""
-        self._post200("/localapi/v0/tka/disable", secret)
-
-    # --- Metrics ---
-
-    def increment_counter(self, name: str, delta: int) -> None:
-        """Increment a user metric counter."""
-        body = json.dumps(
-            [{"Name": name, "Type": "counter", "Value": delta}]
-        ).encode()
-        self._post200("/localapi/v0/upload-client-metrics", body)
-
-    def increment_gauge(self, name: str, delta: int) -> None:
-        """Increment a user metric gauge."""
-        body = json.dumps(
-            [{"Name": name, "Type": "gauge", "Value": delta, "Op": "add"}]
-        ).encode()
-        self._post200("/localapi/v0/upload-client-metrics", body)
-
-    def set_gauge(self, name: str, value: int) -> None:
-        """Set a user metric gauge to a value."""
-        body = json.dumps(
-            [{"Name": name, "Type": "gauge", "Value": value, "Op": "set"}]
-        ).encode()
-        self._post200("/localapi/v0/upload-client-metrics", body)
-
-    # --- Logging ---
-
-    def set_component_debug_logging(
-        self, component: str, secs: int
-    ) -> None:
-        """Enable debug logging for a component for the given duration."""
-        data = self._post200(
-            f"/localapi/v0/component-debug-logging?component={quote(component)}&secs={secs}"
-        )
-        result: dict[str, Any] = json.loads(data)
-        error = result.get("Error", "")
-        if error:
-            raise HttpError(500, error)
-
-    def set_dev_store_key_value(self, key: str, value: str) -> None:
-        """Set a dev store key-value pair."""
-        self._post200(
-            f"/localapi/v0/dev-set-state-store?key={quote(key)}&value={quote(value)}"
-        )
-
-    # --- Debug ---
-
-    def debug_action(self, action: str) -> None:
-        """Perform a debug action."""
-        self._post200(f"/localapi/v0/debug?action={quote(action)}")
-
-    def debug_action_body(self, action: str, body: bytes) -> None:
-        """Perform a debug action with a body."""
-        self._post200(
-            f"/localapi/v0/debug?action={quote(action)}", body
-        )
-
-    def debug_result_json(self, action: str) -> dict[str, Any]:
-        """Perform a debug action and return JSON result."""
-        data = self._post200(
-            f"/localapi/v0/debug?action={quote(action)}"
-        )
-        return json.loads(data)
-
-    def debug_packet_filter_rules(self) -> list[Any]:
-        """Get debug packet filter rules."""
-        data = self._post200("/localapi/v0/debug-packet-filter-rules")
-        return json.loads(data)
-
-    def debug_set_expire_in(self, secs: int) -> None:
-        """Set key expiry to secs from now."""
-        expiry = int(time.time()) + secs
-        self._post200(
-            f"/localapi/v0/set-expiry-sooner?expiry={expiry}"
-        )
-
-    def event_bus_graph(self) -> bytes:
-        """Get the event bus graph."""
-        return self._get200("/localapi/v0/debug-bus-graph")
-
-    # --- System ---
-
-    def bug_report(self, note: str = "") -> str:
-        """File a bug report. Returns the log marker."""
-        data = self._post200(f"/localapi/v0/bugreport?note={quote(note)}")
-        return data.decode().strip()
-
-    def shutdown_tailscaled(self) -> None:
-        """Shut down the tailscaled daemon."""
-        self._post200("/localapi/v0/shutdown")
-
-    def reload_config(self) -> bool:
-        """Reload the daemon config. Returns whether the reload succeeded."""
-        data = self._post200("/localapi/v0/reload-config")
-        result = msgspec.json.decode(data, type=ReloadConfigResponse)
-        if result.err:
-            raise HttpError(500, result.err)
-        return result.reloaded
 
     def close(self) -> None:
         """Close the underlying transport."""
