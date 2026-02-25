@@ -1,0 +1,23 @@
+{
+  "name": "tslocalapi",
+  "version": "1.94.1",
+  "description": "Client library for the Tailscale Local API",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25",
+    "tsdown": "^0",
+    "typescript": "^5",
+    "vitest": "^4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

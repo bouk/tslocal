@@ -1,0 +1,24 @@
+[package]
+name = "tslocalapi"
+version = "1.94.1"
+edition = "2021"
+description = "Client library for the Tailscale Local API"
+
+[dependencies]
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio", "client-legacy", "http1"] }
+http-body-util = "0.1"
+bytes = "1"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+url = "2"
+
+hyperlocal = "0.9"
+libc = "0.2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }
+tempfile = "3"
+tower-service = "0.3.3"
