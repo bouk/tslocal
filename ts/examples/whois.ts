@@ -1,4 +1,4 @@
-import { LocalClient } from "../src/index.js";
+import { LocalClient, jsonReplacer } from "../src/index.js";
 
 const addr = process.argv[2];
 if (!addr) {
@@ -8,5 +8,5 @@ if (!addr) {
 
 const client = new LocalClient();
 const result = await client.whoIs(addr);
-console.log(JSON.stringify(result, null, 2));
+console.log(JSON.stringify(result, jsonReplacer, 2));
 client.destroy();

@@ -59,15 +59,15 @@ type StructInfo struct {
 var knownTypeMap = map[reflect.Type][3]string{
 	reflect.TypeOf(""):                          {"String", "str", "string"},
 	reflect.TypeOf(false):                       {"bool", "bool", "boolean"},
-	reflect.TypeOf(int(0)):                      {"i64", "int", "number"},
+	reflect.TypeOf(int(0)):                      {"i64", "int", "bigint"},
 	reflect.TypeOf(int32(0)):                    {"i32", "int", "number"},
-	reflect.TypeOf(int64(0)):                    {"i64", "int", "number"},
-	reflect.TypeOf(uint(0)):                     {"u64", "int", "number"},
+	reflect.TypeOf(int64(0)):                    {"i64", "int", "bigint"},
+	reflect.TypeOf(uint(0)):                     {"u64", "int", "bigint"},
 	reflect.TypeOf(uint16(0)):                   {"u16", "int", "number"},
-	reflect.TypeOf(uint64(0)):                   {"u64", "int", "number"},
+	reflect.TypeOf(uint64(0)):                   {"u64", "int", "bigint"},
 	reflect.TypeOf(float64(0)):                  {"f64", "float", "number"},
 	reflect.TypeOf(time.Time{}):                 {"String", "str", "string"},
-	reflect.TypeOf(time.Duration(0)):            {"i64", "int", "number"},
+	reflect.TypeOf(time.Duration(0)):            {"i64", "int", "bigint"},
 	reflect.TypeOf(netip.Addr{}):                {"String", "str", "string"},
 	reflect.TypeOf(netip.Prefix{}):              {"String", "str", "string"},
 	reflect.TypeOf(netip.AddrPort{}):            {"String", "str", "string"},
@@ -77,13 +77,13 @@ var knownTypeMap = map[reflect.Type][3]string{
 	reflect.TypeOf(key.DiscoPublic{}):           {"String", "str", "string"},
 	reflect.TypeOf(key.NLPublic{}):              {"String", "str", "string"},
 	reflect.TypeOf(tailcfg.StableNodeID("")):    {"String", "str", "string"},
-	reflect.TypeOf(tailcfg.NodeID(0)):           {"i64", "int", "number"},
-	reflect.TypeOf(tailcfg.UserID(0)):           {"i64", "int", "number"},
+	reflect.TypeOf(tailcfg.NodeID(0)):           {"i64", "int", "bigint"},
+	reflect.TypeOf(tailcfg.UserID(0)):           {"i64", "int", "bigint"},
 	reflect.TypeOf(tailcfg.NodeCapability("")):  {"String", "str", "string"},
 	reflect.TypeOf(tailcfg.PeerCapability("")):  {"String", "str", "string"},
 	reflect.TypeOf(tailcfg.ServiceProto("")):    {"String", "str", "string"},
 	reflect.TypeOf(tailcfg.ServiceName("")):     {"String", "str", "string"},
-	reflect.TypeOf(tailcfg.CapabilityVersion(0)): {"i64", "int", "number"},
+	reflect.TypeOf(tailcfg.CapabilityVersion(0)): {"i64", "int", "bigint"},
 	reflect.TypeOf(json.RawMessage{}):           {"serde_json::Value", "Any", "unknown"},
 	reflect.TypeOf(tailcfg.RawMessage("")):      {"serde_json::Value", "Any", "unknown"},
 	reflect.TypeOf(tka.NodeKeySignature{}):      {"serde_json::Value", "Any", "unknown"},
@@ -210,13 +210,13 @@ func resolveType(t reflect.Type) (rust, python, ts string, isOptional, isSlice, 
 	case reflect.String:
 		return "String", "str", "string", false, false, false, false, ""
 	case reflect.Int, reflect.Int64:
-		return "i64", "int", "number", false, false, false, false, ""
+		return "i64", "int", "bigint", false, false, false, false, ""
 	case reflect.Int32:
 		return "i32", "int", "number", false, false, false, false, ""
 	case reflect.Uint16:
 		return "u16", "int", "number", false, false, false, false, ""
 	case reflect.Uint64, reflect.Uint:
-		return "u64", "int", "number", false, false, false, false, ""
+		return "u64", "int", "bigint", false, false, false, false, ""
 	case reflect.Bool:
 		return "bool", "bool", "boolean", false, false, false, false, ""
 	case reflect.Float64:

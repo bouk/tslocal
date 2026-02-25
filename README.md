@@ -9,7 +9,7 @@ These are direct ports of the official Go client (`tailscale/client/local`), tar
 | Language | Path | Runtime |
 |----------|------|---------|
 | Rust | [`rust/`](rust/) | async/tokio |
-| Python | [`python/`](python/) | async/asyncio |
+| Python | [`python/`](python/) | sync |
 | TypeScript | [`ts/`](ts/) | Node.js |
 
 ## Installation
@@ -17,7 +17,7 @@ These are direct ports of the official Go client (`tailscale/client/local`), tar
 **Rust** — add to `Cargo.toml`:
 ```toml
 [dependencies]
-tslocalapi = { git = "https://github.com/bouk/tslocalapi", subdirectory = "rust" }
+tslocalapi = { git = "https://github.com/bouk/tslocalapi" }
 ```
 
 **Python**:
@@ -53,10 +53,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```python
 from tslocalapi import LocalClient
 
-async def main():
-    async with LocalClient() as client:
-        status = await client.status()
-        print(f"Tailscale version: {status.version}")
+with LocalClient() as client:
+    status = client.status()
+    print(f"Tailscale version: {status.version}")
 ```
 
 ### TypeScript
@@ -72,18 +71,18 @@ client.destroy();
 
 ## Supported Methods
 
-| Method | Description |
-|--------|-------------|
-| `status` | Get full node status including peers |
-| `status_without_peers` | Get node status without peer information |
-| `who_is` | Look up identity by IP address |
-| `who_is_node_key` | Look up identity by node key |
-| `who_is_proto` | Look up identity with custom WhoIsRequest |
-| `cert_pair` | Get TLS certificate and private key |
-| `cert_pair_with_validity` | Get TLS certificate with minimum validity |
-| `get_serve_config` | Get current serve configuration |
-| `set_serve_config` | Set serve configuration |
-| `id_token` | Get an OIDC ID token for an audience |
+| Description | Go | Rust | Python | TypeScript |
+|---|---|---|---|---|
+| Get full node status including peers | `Status` | `status` | `status` | `status` |
+| Get node status without peer information | `StatusWithoutPeers` | `status_without_peers` | `status_without_peers` | `statusWithoutPeers` |
+| Look up identity by IP address | `WhoIs` | `who_is` | `who_is` | `whoIs` |
+| Look up identity by node key | `WhoIsNodeKey` | `who_is_node_key` | `who_is_node_key` | `whoIsNodeKey` |
+| Look up identity with proto and address | `WhoIsProto` | `who_is_proto` | `who_is_proto` | `whoIsProto` |
+| Get TLS certificate and private key | `CertPair` | `cert_pair` | `cert_pair` | `certPair` |
+| Get TLS certificate with minimum validity | `CertPairWithValidity` | `cert_pair_with_validity` | `cert_pair_with_validity` | `certPairWithValidity` |
+| Get current serve configuration | `GetServeConfig` | `get_serve_config` | `get_serve_config` | `getServeConfig` |
+| Set serve configuration | `SetServeConfig` | `set_serve_config` | `set_serve_config` | `setServeConfig` |
+| Get an OIDC ID token for an audience | `IDToken` | `id_token` | `id_token` | `idToken` |
 
 ## Build & Test
 

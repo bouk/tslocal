@@ -1,5 +1,6 @@
 import type { Readable } from "node:stream";
-import type { Notify } from "./types.js";
+import { parseJSON } from "./json.js";
+import { NotifySchema, type Notify } from "./types.js";
 
 /**
  * Async iterator over IPN bus notifications.
@@ -25,7 +26,7 @@ export class IPNBusWatcher implements AsyncIterable<Notify> {
         const line = this.buffer.slice(0, newlineIdx);
         this.buffer = this.buffer.slice(newlineIdx + 1);
         if (line.trim()) {
-          return JSON.parse(line);
+          return NotifySchema.parse(parseJSON(line));
         }
         continue;
       }
