@@ -17,17 +17,17 @@ These are direct ports of the official Go client (`tailscale/client/local`), tar
 **Rust** — add to `Cargo.toml`:
 ```toml
 [dependencies]
-tslocalapi = { git = "https://github.com/bouk/tslocalapi" }
+tslocalapi = "0.0.3"
 ```
 
 **Python**:
 ```sh
-pip install git+https://github.com/bouk/tslocalapi
+pip install tslocalapi
 ```
 
 **TypeScript**:
 ```sh
-npm install github:bouk/tslocalapi
+npm install tslocalapi
 ```
 
 ## Usage

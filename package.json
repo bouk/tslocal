@@ -24,6 +24,18 @@
     "typescript": "^5",
     "vitest": "^4"
   },
+  "license": "BSD-3-Clause",
+  "author": "Bouke van der Bijl",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bouk/tslocalapi.git"
+  },
+  "homepage": "https://github.com/bouk/tslocalapi",
+  "keywords": [
+    "tailscale",
+    "local-api",
+    "vpn"
+  ],
   "engines": {
     "node": ">=22"
   }

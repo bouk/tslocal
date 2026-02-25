@@ -5,7 +5,10 @@ edition = "2024"
 description = "Client library for the Tailscale Local API"
 license = "BSD-3-Clause"
 repository = "https://github.com/bouk/tslocalapi"
+homepage = "https://github.com/bouk/tslocalapi"
 readme = "README.md"
+keywords = ["tailscale", "local-api", "vpn"]
+categories = ["api-bindings", "network-programming"]
 
 [lib]
 path = "rust/src/lib.rs"
