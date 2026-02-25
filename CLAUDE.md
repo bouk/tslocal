@@ -6,7 +6,7 @@ The libraries should use exact ports of the Go source, you can find the original
 
 ## Versioning
 
-Package versions are independently versioned (currently **0.0.1**). The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1).
+Package versions are independently versioned (currently **0.0.2**). The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1).
 
 ## Project Structure
 
@@ -19,7 +19,16 @@ Package versions are independently versioned (currently **0.0.1**). The librarie
 
 - **Rust**: `cargo test`, `cargo check`, `cargo clippy`
 - **Python**: `uv run pytest`, `uvx ty check python/src`
-- **TypeScript**: `npm test`, `npx tsc --noEmit`, `npx tsx ts/examples/status.ts`
+- **TypeScript**: `npm test`, `npx tsc --noEmit`
+- **Examples** (always run after changes):
+  ```sh
+  cargo run --example status
+  cargo run --example serve_config
+  uv run python/examples/status.py
+  uv run python/examples/serve_config.py
+  npx tsx ts/examples/status.ts
+  npx tsx ts/examples/serve_config.ts
+  ```
 
 ## Conventions
 

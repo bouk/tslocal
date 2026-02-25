@@ -1,4 +1,4 @@
-import { parseJSON } from "./json.js";
+import { parseJSON, jsonReplacer } from "./json.js";
 import {
   AccessDeniedError,
   ConnectionError,
@@ -33,7 +33,7 @@ export class LocalClient {
     path: string,
     body?: Buffer | string,
     headers?: Record<string, string>,
-  ): Promise<{ status: number; body: Buffer }> {
+  ): Promise<{ status: number; body: Buffer; headers: Record<string, string | string[] | undefined> }> {
     try {
       return await this.transport.request(method, path, body, headers);
     } catch (err: unknown) {
@@ -145,10 +145,14 @@ export class LocalClient {
   async getServeConfig(): Promise<{ config: Record<string, unknown>; etag: string }> {
     const resp = await this.doRequest("GET", "/localapi/v0/serve-config");
     if (resp.status !== 200) {
-      const msg = resp.body.toString("utf-8");
+      const bodyStr = resp.body.toString("utf-8");
+      const msg = errorMessageFromBody(bodyStr) ?? bodyStr;
+      if (resp.status === 403) throw new AccessDeniedError(msg);
+      if (resp.status === 412) throw new PreconditionsFailedError(msg);
       throw new HttpError(resp.status, msg);
     }
-    return { config: parseJSON(resp.body.toString("utf-8")), etag: "" };
+    const etag = (resp.headers["etag"] as string) ?? "";
+    return { config: parseJSON(resp.body.toString("utf-8")), etag };
   }
 
   async setServeConfig(
@@ -157,7 +161,7 @@ export class LocalClient {
   ): Promise<void> {
     const headers: Record<string, string> = {};
     if (etag) headers["If-Match"] = etag;
-    const body = JSON.stringify(config);
+    const body = JSON.stringify(config, jsonReplacer);
     await this.doRequestNice("POST", "/localapi/v0/serve-config", body, headers);
   }
 

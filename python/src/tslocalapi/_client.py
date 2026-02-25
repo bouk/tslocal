@@ -50,8 +50,8 @@ class LocalClient:
         path: str,
         body: bytes | None = None,
         headers: dict[str, str] | None = None,
-    ) -> tuple[int, bytes]:
-        """Send a request and return (status, body)."""
+    ) -> tuple[int, bytes, dict[str, str]]:
+        """Send a request and return (status, body, response_headers)."""
         try:
             return self._transport.request(method, path, body, headers)
         except OSError as e:
@@ -67,7 +67,7 @@ class LocalClient:
         headers: dict[str, str] | None = None,
     ) -> bytes:
         """Send a request and map error status codes to exceptions."""
-        status, resp_body = self._do_request(method, path, body, headers)
+        status, resp_body, _ = self._do_request(method, path, body, headers)
         if 200 <= status < 300:
             return resp_body
 
@@ -104,7 +104,7 @@ class LocalClient:
 
     def who_is(self, remote_addr: str) -> WhoIsResponse:
         """Look up the owner of an IP address or IP:port."""
-        status, body = self._do_request(
+        status, body, _ = self._do_request(
             "GET", f"/localapi/v0/whois?addr={quote(remote_addr)}"
         )
         if status == 404:
@@ -125,7 +125,7 @@ class LocalClient:
 
         The proto parameter should be "tcp" or "udp".
         """
-        status, body = self._do_request(
+        status, body, _ = self._do_request(
             "GET",
             f"/localapi/v0/whois?proto={quote(proto)}&addr={quote(remote_addr)}",
         )
@@ -155,7 +155,7 @@ class LocalClient:
         delimiter = b"--\n--"
         idx = data.find(delimiter)
         if idx == -1:
-            return data, b""
+            raise ValueError("unexpected cert response: no delimiter")
         key_pem = data[: idx + 3]  # includes the "--"
         cert_pem = data[idx + 3 :]  # starts with "--"
         return cert_pem, key_pem
@@ -164,12 +164,12 @@ class LocalClient:
 
     def get_serve_config(self) -> tuple[dict[str, Any], str]:
         """Get the current serve config. Returns (config, etag)."""
-        status, body = self._do_request("GET", "/localapi/v0/serve-config")
+        status, body, resp_headers = self._do_request("GET", "/localapi/v0/serve-config")
         if status != 200:
             msg = error_message_from_body(body) or body.decode()
             raise HttpError(status, msg)
-        # ETag would come from response headers; for now return empty
-        return json.loads(body), ""
+        etag = resp_headers.get("Etag", resp_headers.get("etag", ""))
+        return json.loads(body), etag
 
     def set_serve_config(self, config: dict[str, Any], etag: str = "") -> None:
         """Set the serve config."""

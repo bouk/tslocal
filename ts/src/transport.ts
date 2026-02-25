@@ -64,7 +64,7 @@ export class Transport {
     path: string,
     body?: Buffer | string,
     extraHeaders?: Record<string, string>,
-  ): Promise<{ status: number; body: Buffer }> {
+  ): Promise<{ status: number; body: Buffer; headers: http.IncomingHttpHeaders }> {
     return new Promise((resolve, reject) => {
       const headers: Record<string, string> = {
         Host: LOCAL_API_HOST,
@@ -98,6 +98,7 @@ export class Transport {
           resolve({
             status: res.statusCode ?? 0,
             body: Buffer.concat(chunks),
+            headers: res.headers,
           });
         });
         res.on("error", reject);

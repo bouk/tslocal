@@ -10,7 +10,7 @@ import {
 
 let server: http.Server;
 let port: number;
-let responses: Record<string, { status: number; body: unknown; method?: string }> = {};
+let responses: Record<string, { status: number; body: unknown; method?: string; headers?: Record<string, string> }> = {};
 let lastRequestBody: string | undefined;
 let lastRequestMethod: string | undefined;
 let lastRequestUrl: string | undefined;
@@ -39,7 +39,7 @@ beforeAll(
                 : entry.body instanceof Buffer
                   ? entry.body
                   : JSON.stringify(entry.body);
-            res.writeHead(entry.status, { "Content-Type": "application/json" });
+            res.writeHead(entry.status, { "Content-Type": "application/json", ...entry.headers });
             res.end(body);
           } else {
             res.writeHead(404);
@@ -256,6 +256,53 @@ describe("LocalClient", () => {
     const client = makeClient();
     const result = await client.whoIsProto("tcp", "100.64.0.1:80");
     expect(result.UserProfile?.LoginName).toBe("user@example.com");
+    client.destroy();
+  });
+
+  it("getServeConfig returns config and etag", async () => {
+    responses = {
+      "/localapi/v0/serve-config": {
+        status: 200,
+        body: { TCP: {}, Web: {} },
+        headers: { Etag: '"abc123"' },
+      },
+    };
+
+    const client = makeClient();
+    const { config, etag } = await client.getServeConfig();
+    expect(config).toEqual({ TCP: {}, Web: {} });
+    expect(etag).toBe('"abc123"');
+    client.destroy();
+  });
+
+  it("getServeConfig throws with error message on failure", async () => {
+    responses = {
+      "/localapi/v0/serve-config": {
+        status: 500,
+        body: { error: "internal error" },
+      },
+    };
+
+    const client = makeClient();
+    await expect(client.getServeConfig()).rejects.toThrow(HttpError);
+    await expect(client.getServeConfig()).rejects.toThrow("internal error");
+    client.destroy();
+  });
+
+  it("setServeConfig sends config with etag", async () => {
+    responses = {
+      "/localapi/v0/serve-config": {
+        status: 200,
+        body: {},
+        method: "POST",
+      },
+    };
+
+    const client = makeClient();
+    await client.setServeConfig({ TCP: {} }, '"etag-value"');
+    expect(lastRequestMethod).toBe("POST");
+    expect(lastRequestUrl).toBe("/localapi/v0/serve-config");
+    expect(JSON.parse(lastRequestBody!)).toEqual({ TCP: {} });
     client.destroy();
   });
 

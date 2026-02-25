@@ -84,8 +84,8 @@ class Transport:
         path: str,
         body: bytes | None = None,
         headers: dict[str, str] | None = None,
-    ) -> tuple[int, bytes]:
-        """Send an HTTP request and return (status_code, body)."""
+    ) -> tuple[int, bytes, dict[str, str]]:
+        """Send an HTTP request and return (status_code, body, response_headers)."""
         all_headers: dict[str, str] = {
             "Host": LOCAL_API_HOST,
             "Tailscale-Cap": str(CURRENT_CAP_VERSION),
@@ -101,7 +101,7 @@ class Transport:
             conn.request(method, path, body=body, headers=all_headers)
             resp = conn.getresponse()
             data = resp.read()
-            return resp.status, data
+            return resp.status, data, dict(resp.getheaders())
         except (ConnectionError, OSError, http.client.HTTPException):
             # Connection broken, close and retry once
             self._close_connection()
@@ -109,7 +109,7 @@ class Transport:
             conn.request(method, path, body=body, headers=all_headers)
             resp = conn.getresponse()
             data = resp.read()
-            return resp.status, data
+            return resp.status, data, dict(resp.getheaders())
 
     def close(self) -> None:
         """Close the underlying connection."""

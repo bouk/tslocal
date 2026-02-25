@@ -582,6 +582,7 @@ pub struct Node {
     #[serde(skip_serializing_if = "is_zero")]
     #[serde(default)]
     pub home_derp: i64,
+    #[serde(default)]
     pub hostinfo: Hostinfo,
     #[serde(skip_serializing_if = "String::is_empty")]
     #[serde(default)]
@@ -1498,6 +1499,7 @@ pub struct ProtoPortRange {
     /// If Proto is 0, it means TCP+UDP+ICMP(4+6).
     #[serde(default)]
     pub proto: i64,
+    #[serde(default)]
     pub ports: PortRange,
 }
 
@@ -1719,9 +1721,11 @@ pub struct Prefs {
     pub profile_name: String,
     /// AutoUpdate sets the auto-update preferences for the node agent. See
     /// AutoUpdatePrefs docs for more details.
+    #[serde(default)]
     pub auto_update: AutoUpdatePrefs,
     /// AppConnector sets the app connector preferences for the node agent. See
     /// AppConnectorPrefs docs for more details.
+    #[serde(default)]
     pub app_connector: AppConnectorPrefs,
     /// PostureChecking enables the collection of information used for device
     /// posture checks.
@@ -1996,9 +2000,11 @@ pub struct MaskedPrefs {
     pub profile_name: String,
     /// AutoUpdate sets the auto-update preferences for the node agent. See
     /// AutoUpdatePrefs docs for more details.
+    #[serde(default)]
     pub auto_update: AutoUpdatePrefs,
     /// AppConnector sets the app connector preferences for the node agent. See
     /// AppConnectorPrefs docs for more details.
+    #[serde(default)]
     pub app_connector: AppConnectorPrefs,
     /// PostureChecking enables the collection of information used for device
     /// posture checks.
@@ -2138,6 +2144,7 @@ pub struct MaskedPrefs {
     #[serde(skip_serializing_if = "is_false")]
     #[serde(default)]
     pub profile_name_set: bool,
+    #[serde(default)]
     pub auto_update_set: AutoUpdatePrefsMask,
     #[serde(skip_serializing_if = "is_false")]
     #[serde(default)]
@@ -2552,6 +2559,7 @@ pub struct LoginProfile {
     /// profile was logged in with.
     /// 
     /// This field was added on 2023-11-17.
+    #[serde(default)]
     pub network_profile: NetworkProfile,
     /// Key is the StateKey under which the profile is stored.
     /// It is assigned once at profile creation time and never changes.
@@ -2559,6 +2567,7 @@ pub struct LoginProfile {
     pub key: String,
     /// UserProfile is the server provided UserProfile for this profile.
     /// This is updated whenever the server provides a new UserProfile.
+    #[serde(default)]
     pub user_profile: UserProfile,
     /// NodeID is the NodeID of the node that this profile is logged into.
     /// This should be stable across tagging and untagging nodes.
@@ -2657,6 +2666,7 @@ pub struct ExitNodeSuggestionResponse {
     pub id: String,
     #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub location: Location,
 }
 

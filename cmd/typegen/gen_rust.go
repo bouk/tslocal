@@ -93,6 +93,8 @@ func generateRust(structs []*StructInfo) string {
 					b.WriteString("    #[serde(skip_serializing_if = \"Option::is_none\")]\n")
 				}
 				b.WriteString("    #[serde(default)]\n")
+			} else if fi.IsNestedStruct {
+				b.WriteString("    #[serde(default)]\n")
 			} else if rustType == "String" || rustType == "bool" || isIntType(rustType) || rustType == "f64" {
 				b.WriteString("    #[serde(default)]\n")
 			}
