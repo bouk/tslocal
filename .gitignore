@@ -1,6 +1,9 @@
 # local checkout of tailscale source
 /tailscale
 
+# reference docs
+tailscale-client.txt
+
 # Rust
 /target
 rust/target
