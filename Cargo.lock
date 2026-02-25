@@ -774,7 +774,6 @@ dependencies = [
  "tempfile",
  "thiserror",
  "tokio",
- "tower-service",
  "url",
 ]
 

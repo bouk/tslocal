@@ -70,26 +70,20 @@ console.log(`Tailscale version: ${status.Version}`);
 client.destroy();
 ```
 
-## API Coverage
+## Supported Methods
 
-The libraries cover the full Tailscale Local API surface, including:
-
-- **Status** — node status, peer information
-- **WhoIs** — identity lookup by IP address or node key
-- **Auth** — login, logout, interactive login
-- **Prefs** — get/edit/check preferences
-- **Profiles** — list, switch, create, delete profiles
-- **DNS** — query DNS, set DNS records, OS DNS config
-- **Ping** — ping peers via DERP, TSMP, or ICMPv4
-- **DERP** — DERP map, region debugging, relay sessions
-- **Certificates** — TLS cert pairs, SNI expansion
-- **Serve** — get/set serve config
-- **Exit Nodes** — enable/disable, suggestions
-- **Taildrop** — send/receive files
-- **Taildrive** — share management
-- **Network Lock** — tailnet lock operations
-- **Metrics** — daemon/user metrics, counters, gauges
-- **Diagnostics** — bug reports, goroutines, pprof, config reload
+| Method | Description |
+|--------|-------------|
+| `status` | Get full node status including peers |
+| `status_without_peers` | Get node status without peer information |
+| `who_is` | Look up identity by IP address |
+| `who_is_node_key` | Look up identity by node key |
+| `who_is_proto` | Look up identity with custom WhoIsRequest |
+| `cert_pair` | Get TLS certificate and private key |
+| `cert_pair_with_validity` | Get TLS certificate with minimum validity |
+| `get_serve_config` | Get current serve configuration |
+| `set_serve_config` | Set serve configuration |
+| `id_token` | Get an OIDC ID token for an audience |
 
 ## Build & Test
 
