@@ -6,29 +6,7 @@ The libraries should use exact ports of the Go source, you can find the original
 
 ## Versioning
 
-All packages share the same version (currently **0.0.4**). Versions must be kept in lockstep across all three packages. The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1).
-
-Version is set in these files (all must match):
-- `Cargo.toml` — `version = "X.Y.Z"`
-- `package.json` — `"version": "X.Y.Z"`
-- `pyproject.toml` — `version = "X.Y.Z"`
-- `python/src/tslocalapi/__init__.py` — `__version__ = "X.Y.Z"`
-
-## Publishing
-
-Every release must be git-tagged as `vX.Y.Z`. Steps:
-
-1. Bump version in all four files listed above
-2. Commit: `git commit -am "Bump version to X.Y.Z"`
-3. Tag: `git tag vX.Y.Z`
-4. Build TypeScript: `npm run build`
-5. Publish all three:
-   ```sh
-   cargo publish
-   uv build && uv publish
-   npm publish --otp=<code>
-   ```
-6. Push: `git push && git push --tags`
+All packages share the same version (currently **0.0.5**). Versions must be kept in lockstep across all three packages. The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1). Use the `/release` skill to publish a new version.
 
 ## Project Structure
 
