@@ -1,12 +1,12 @@
 {
   "name": "tslocalapi",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Client library for the Tailscale Local API",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist",
+    "dist/index.*",
     "ts/src"
   ],
   "scripts": {
