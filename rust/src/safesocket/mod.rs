@@ -1,5 +1,7 @@
+/// macOS-specific TCP port and token discovery.
 #[cfg(target_os = "macos")]
 pub mod darwin;
+/// Unix domain socket connection.
 pub mod unix;
 
 /// Default socket path for the current platform.

@@ -1,14 +1,19 @@
-pub mod api;
-pub mod client;
-pub mod error;
-pub mod safesocket;
-pub mod transport;
-pub mod types;
+#![deny(missing_docs)]
 
-// Re-export the most commonly used types at the crate root.
+//! Client library for the Tailscale Local API.
+
+mod api;
+mod client;
+mod error;
+mod safesocket;
+mod transport;
+#[allow(missing_docs)]
+mod types;
+
 pub use client::Client;
 pub use error::Error;
-pub use types::{PeerStatus, ServeConfig, Status, WhoIsResponse};
+pub use transport::TransportConfig;
+pub use types::*;
 
 /// URL-encode a string for use in query parameters.
 pub(crate) fn urlencode(s: &str) -> String {

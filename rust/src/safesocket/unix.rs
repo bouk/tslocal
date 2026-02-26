@@ -1,15 +1,6 @@
-use std::path::Path;
-use tokio::net::UnixStream;
-
-/// Connect to tailscaled via Unix domain socket.
-pub async fn connect(path: &str) -> Result<UnixStream, std::io::Error> {
-    UnixStream::connect(Path::new(path)).await
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use tokio::net::UnixListener;
+    use tokio::net::{UnixListener, UnixStream};
 
     #[tokio::test]
     async fn test_unix_socket_connect() {
@@ -20,7 +11,7 @@ mod tests {
         let listener = UnixListener::bind(&sock_path).unwrap();
 
         let connect_handle = tokio::spawn(async move {
-            connect(&sock_path_str).await
+            UnixStream::connect(&sock_path_str).await
         });
 
         let (server_conn, _) = listener.accept().await.unwrap();

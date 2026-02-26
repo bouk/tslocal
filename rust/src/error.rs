@@ -3,47 +3,77 @@ use thiserror::Error;
 /// Root error type for the Tailscale Local API client.
 #[derive(Error, Debug)]
 pub enum Error {
+    /// The server returned HTTP 403.
     #[error("access denied: {message}")]
-    AccessDenied { message: String },
+    AccessDenied {
+        /// The error message from the server.
+        message: String,
+    },
 
+    /// The server returned HTTP 412.
     #[error("preconditions failed: {message}")]
-    PreconditionsFailed { message: String },
+    PreconditionsFailed {
+        /// The error message from the server.
+        message: String,
+    },
 
+    /// A WhoIs lookup returned HTTP 404.
     #[error("peer not found: {message}")]
-    PeerNotFound { message: String },
+    PeerNotFound {
+        /// The address or key that was not found.
+        message: String,
+    },
 
+    /// Failed to connect to tailscaled.
     #[error("connection error: {message}")]
-    Connection { message: String },
+    Connection {
+        /// The underlying connection error message.
+        message: String,
+    },
 
+    /// The tailscale daemon is not running.
     #[error("daemon not running")]
     DaemonNotRunning,
 
+    /// An unexpected HTTP status code was returned.
     #[error("HTTP error {status}: {message}")]
-    Http { status: u16, message: String },
+    Http {
+        /// The HTTP status code.
+        status: u16,
+        /// The error message from the server.
+        message: String,
+    },
 
+    /// JSON serialization or deserialization failed.
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 
+    /// An I/O error occurred.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// An error that doesn't fit other categories.
     #[error("{0}")]
     Other(String),
 }
 
 impl Error {
+    /// Returns `true` if this is an [`Error::AccessDenied`] error.
     pub fn is_access_denied(&self) -> bool {
         matches!(self, Error::AccessDenied { .. })
     }
 
+    /// Returns `true` if this is an [`Error::PreconditionsFailed`] error.
     pub fn is_preconditions_failed(&self) -> bool {
         matches!(self, Error::PreconditionsFailed { .. })
     }
 
+    /// Returns `true` if this is an [`Error::PeerNotFound`] error.
     pub fn is_peer_not_found(&self) -> bool {
         matches!(self, Error::PeerNotFound { .. })
     }
 
+    /// Returns `true` if this is a connection-related error.
     pub fn is_connection_error(&self) -> bool {
         matches!(self, Error::Connection { .. } | Error::DaemonNotRunning)
     }

@@ -90,7 +90,7 @@ impl Client {
     }
 
     /// Send a request and return status + body.
-    pub async fn do_request(
+    pub(crate) async fn do_request(
         &self,
         method: &str,
         path: &str,
@@ -100,7 +100,7 @@ impl Client {
     }
 
     /// Send a request with extra headers and return status + body.
-    pub async fn do_request_with_headers(
+    pub(crate) async fn do_request_with_headers(
         &self,
         method: &str,
         path: &str,
@@ -121,7 +121,7 @@ impl Client {
     }
 
     /// Send a request and map non-2xx status codes to errors (like `doLocalRequestNiceError`).
-    pub async fn do_request_nice(
+    pub(crate) async fn do_request_nice(
         &self,
         method: &str,
         path: &str,
@@ -131,7 +131,7 @@ impl Client {
     }
 
     /// Send a request with extra headers and map non-2xx status codes to errors.
-    pub async fn do_request_nice_with_headers(
+    pub(crate) async fn do_request_nice_with_headers(
         &self,
         method: &str,
         path: &str,
@@ -157,18 +157,10 @@ impl Client {
     }
 
     /// GET request expecting 2xx response.
-    pub async fn get200(&self, path: &str) -> Result<Vec<u8>, Error> {
+    pub(crate) async fn get200(&self, path: &str) -> Result<Vec<u8>, Error> {
         self.do_request_nice("GET", path, None).await
     }
 
-    /// POST request expecting 2xx response.
-    pub async fn post200(
-        &self,
-        path: &str,
-        body: Option<&[u8]>,
-    ) -> Result<Vec<u8>, Error> {
-        self.do_request_nice("POST", path, body).await
-    }
 }
 
 impl Default for Client {

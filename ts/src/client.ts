@@ -74,11 +74,13 @@ export class LocalClient {
 
   // --- Status ---
 
+  /** Get the current tailscaled status. */
   async status(): Promise<Status> {
     const data = await this.get200("/localapi/v0/status");
     return StatusSchema.parse(parseJSON(data.toString("utf-8")));
   }
 
+  /** Get the current tailscaled status without peer information. */
   async statusWithoutPeers(): Promise<Status> {
     const data = await this.get200("/localapi/v0/status?peers=false");
     return StatusSchema.parse(parseJSON(data.toString("utf-8")));
@@ -103,24 +105,29 @@ export class LocalClient {
     return WhoIsResponseSchema.parse(parseJSON(resp.body.toString("utf-8")));
   }
 
+  /** Look up the owner of an IP address or IP:port. */
   async whoIs(remoteAddr: string): Promise<WhoIsResponse> {
     return this.doWhoIs(`addr=${encodeURIComponent(remoteAddr)}`);
   }
 
+  /** Look up a peer by node key. */
   async whoIsNodeKey(nodeKey: string): Promise<WhoIsResponse> {
     return this.whoIs(nodeKey);
   }
 
+  /** Look up the owner of an IP address with a specific protocol ("tcp" or "udp"). */
   async whoIsProto(proto: string, remoteAddr: string): Promise<WhoIsResponse> {
     return this.doWhoIs(`proto=${encodeURIComponent(proto)}&addr=${encodeURIComponent(remoteAddr)}`);
   }
 
   // --- Cert ---
 
+  /** Get a TLS certificate and private key for the given domain. */
   async certPair(domain: string): Promise<{ cert: Buffer; key: Buffer }> {
     return this.certPairWithValidity(domain, 0);
   }
 
+  /** Get a TLS certificate with minimum validity duration (in seconds). */
   async certPairWithValidity(
     domain: string,
     minValiditySecs: number,
@@ -142,6 +149,7 @@ export class LocalClient {
 
   // --- Config ---
 
+  /** Get the current serve configuration. Returns the config and its ETag. */
   async getServeConfig(): Promise<{ config: Record<string, unknown>; etag: string }> {
     const resp = await this.doRequest("GET", "/localapi/v0/serve-config");
     if (resp.status !== 200) {
@@ -155,6 +163,7 @@ export class LocalClient {
     return { config: parseJSON(resp.body.toString("utf-8")), etag };
   }
 
+  /** Set the serve configuration. Optionally pass an ETag for conditional update. */
   async setServeConfig(
     config: Record<string, unknown>,
     etag?: string,
@@ -167,6 +176,7 @@ export class LocalClient {
 
   // --- ID Token ---
 
+  /** Get an OIDC ID token for the given audience. */
   async idToken(aud: string): Promise<Record<string, unknown>> {
     const data = await this.get200(
       `/localapi/v0/id-token?aud=${encodeURIComponent(aud)}`,
@@ -174,6 +184,7 @@ export class LocalClient {
     return parseJSON(data.toString("utf-8"));
   }
 
+  /** Close the underlying transport and release resources. */
   destroy(): void {
     this.transport.destroy();
   }
