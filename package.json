@@ -28,7 +28,7 @@
   "author": "Bouke van der Bijl",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bouk/tslocalapi.git"
+    "url": "git+https://github.com/bouk/tslocalapi.git"
   },
   "homepage": "https://github.com/bouk/tslocalapi",
   "keywords": [
