@@ -84,6 +84,9 @@ func parseComments(tailscaleDir string, files []string) (map[string]*StructComme
 // cleanComment strips leading/trailing whitespace and trims trailing newlines.
 func cleanComment(s string) string {
 	s = strings.TrimSpace(s)
+	// Replace tabs with 4 spaces (Go comments use tabs for indentation,
+	// but tabs in doc comments cause warnings in Rust/TypeScript/Python).
+	s = strings.ReplaceAll(s, "\t", "    ")
 	// Remove trailing period-newline patterns
 	lines := strings.Split(s, "\n")
 	var cleaned []string

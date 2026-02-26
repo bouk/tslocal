@@ -1483,10 +1483,10 @@ pub struct PortRange {
 /// ProtoPortRange is used to encode "proto:port" format.
 /// The following formats are supported:
 /// 
-/// 	"*" allows all TCP, UDP and ICMP traffic on all ports.
-/// 	"<ports>" allows all TCP, UDP and ICMP traffic on the specified ports.
-/// 	"proto:*" allows traffic of the specified proto on all ports.
-/// 	"proto:<port>" allows traffic of the specified proto on the specified port.
+///     "*" allows all TCP, UDP and ICMP traffic on all ports.
+///     "<ports>" allows all TCP, UDP and ICMP traffic on the specified ports.
+///     "proto:*" allows traffic of the specified proto on all ports.
+///     "proto:<port>" allows traffic of the specified proto on the specified port.
 /// 
 /// Ports are either a single port number or a range of ports (e.g. "80-90").
 /// String named protocols support names that ipproto.Proto accepts.

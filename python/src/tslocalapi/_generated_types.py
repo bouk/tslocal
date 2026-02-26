@@ -935,7 +935,7 @@ class PortRange(msgspec.Struct, rename="pascal"):
 
 
 class ProtoPortRange(msgspec.Struct, rename="pascal"):
-    "ProtoPortRange is used to encode \"proto:port\" format.\nThe following formats are supported:\n\n\t\"*\" allows all TCP, UDP and ICMP traffic on all ports.\n\t\"<ports>\" allows all TCP, UDP and ICMP traffic on the specified ports.\n\t\"proto:*\" allows traffic of the specified proto on all ports.\n\t\"proto:<port>\" allows traffic of the specified proto on the specified port.\n\nPorts are either a single port number or a range of ports (e.g. \"80-90\").\nString named protocols support names that ipproto.Proto accepts."
+    "ProtoPortRange is used to encode \"proto:port\" format.\nThe following formats are supported:\n\n    \"*\" allows all TCP, UDP and ICMP traffic on all ports.\n    \"<ports>\" allows all TCP, UDP and ICMP traffic on the specified ports.\n    \"proto:*\" allows traffic of the specified proto on all ports.\n    \"proto:<port>\" allows traffic of the specified proto on the specified port.\n\nPorts are either a single port number or a range of ports (e.g. \"80-90\").\nString named protocols support names that ipproto.Proto accepts."
 
     # Proto is the IP protocol number.
     # If Proto is 0, it means TCP+UDP+ICMP(4+6).

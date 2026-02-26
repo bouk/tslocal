@@ -48,9 +48,9 @@ pub(crate) async fn resolve_port_and_token(use_socket_only: bool) -> Option<(u16
 pub(crate) fn auth_header_for_token(token: &str) -> String {
     use std::io::Write;
     let mut buf = Vec::new();
-    _ = write!(buf, ":{}", token);
+    _ = write!(buf, ":{token}");
     let encoded = base64_encode(&buf);
-    format!("Basic {}", encoded)
+    format!("Basic {encoded}")
 }
 
 fn base64_encode(data: &[u8]) -> String {

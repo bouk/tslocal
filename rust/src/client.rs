@@ -97,7 +97,7 @@ impl Client {
             .into_body()
             .collect()
             .await
-            .map_err(|e| Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?
+            .map_err(|e| Error::Io(std::io::Error::other(e.to_string())))?
             .to_bytes()
             .to_vec();
         Ok((status, body))
@@ -301,8 +301,7 @@ impl Client {
             .collect()
             .await
             .map_err(|e| {
-                Error::Io(std::io::Error::new(
-                    std::io::ErrorKind::Other,
+                Error::Io(std::io::Error::other(
                     e.to_string(),
                 ))
             })?

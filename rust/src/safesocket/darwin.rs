@@ -20,7 +20,7 @@ async fn read_macos_same_user_proof() -> Result<(u16, String), io::Error> {
         .args([
             "-n",
             "-a",
-            &format!("-u{}", uid),
+            &format!("-u{uid}"),
             "-c",
             "IPNExtension",
             "-F",
@@ -69,7 +69,7 @@ async fn read_macsys_same_user_proof_from(shared_dir: &str) -> Result<(u16, Stri
         .parse()
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    let token_path = Path::new(shared_dir).join(format!("sameuserproof-{}", port));
+    let token_path = Path::new(shared_dir).join(format!("sameuserproof-{port}"));
     let token = tokio::fs::read_to_string(&token_path)
         .await?
         .trim()
