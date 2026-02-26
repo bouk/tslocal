@@ -4,6 +4,11 @@
 # reference docs
 tailscale-client.txt
 
+# Lockfiles
+uv.lock
+Cargo.lock
+package-lock.json
+
 # Rust
 /target
 rust/target
