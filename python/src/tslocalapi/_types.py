@@ -41,7 +41,7 @@ from tslocalapi._generated_types import (  # noqa: F401
     PartialFile,
     OutgoingFile,
     EngineStatus,
-    ServeConfig,
+    ServeConfig as _GeneratedServeConfig,
     TCPPortHandler,
     WebServerConfig,
     HTTPHandler,
@@ -60,6 +60,16 @@ from tslocalapi._generated_types import (  # noqa: F401
     SetPushDeviceTokenRequest,
     Resolver,
 )
+
+
+class ServeConfig(_GeneratedServeConfig, omit_defaults=True):
+    """ServeConfig with ETag field for conditional updates.
+
+    The e_tag field is populated by get_serve_config from the HTTP Etag
+    header and used by set_serve_config for the If-Match header.
+    """
+
+    e_tag: str = ""
 
 
 class CurrentTailnet(msgspec.Struct, rename="pascal"):

@@ -1,12 +1,15 @@
 """Print the current serve config and its ETag."""
 
-import json
 import sys
+
+import msgspec
 
 from tslocalapi import LocalClient
 
 with LocalClient() as client:
-    config, etag = client.get_serve_config()
-    print(f"ETag: {etag}", file=sys.stderr)
-    json.dump(config, sys.stdout, indent=2)
+    config = client.get_serve_config()
+    print(f"ETag: {config.e_tag}", file=sys.stderr)
+    # Reset e_tag to default so omit_defaults excludes it from output
+    config.e_tag = ""
+    sys.stdout.buffer.write(msgspec.json.format(msgspec.json.encode(config)))
     sys.stdout.write("\n")

@@ -152,6 +152,11 @@ func extractStructDeps(si *StructInfo, structNames map[string]bool) []string {
 	}
 
 	for _, fi := range si.Fields {
+		// Skipped fields are not in the schema, so they don't create dependencies
+		if fi.IsSkipped {
+			continue
+		}
+
 		if fi.IsNestedStruct && fi.NestedTypeName != "" {
 			add(fi.NestedTypeName)
 			continue
@@ -243,6 +248,11 @@ func generateTypeScript(structs []*StructInfo) string {
 		b.WriteString(fmt.Sprintf("export const %sSchema = z.object({\n", si.Name))
 
 		for _, fi := range si.Fields {
+			// Skipped fields (json:"-") are excluded from the schema
+			if fi.IsSkipped {
+				continue
+			}
+
 			// Field doc comment
 			if fi.Comment != "" {
 				writeComment(&b, fi.Comment, "  ")
@@ -253,7 +263,31 @@ func generateTypeScript(structs []*StructInfo) string {
 		}
 
 		b.WriteString("});\n")
-		b.WriteString(fmt.Sprintf("export type %s = z.infer<typeof %sSchema>;\n", si.Name, si.Name))
+
+		// Check if there are skipped fields to add to the type (but not the schema)
+		hasSkippedFields := false
+		for _, fi := range si.Fields {
+			if fi.IsSkipped {
+				hasSkippedFields = true
+				break
+			}
+		}
+
+		if hasSkippedFields {
+			b.WriteString(fmt.Sprintf("export type %s = z.infer<typeof %sSchema> & {\n", si.Name, si.Name))
+			for _, fi := range si.Fields {
+				if !fi.IsSkipped {
+					continue
+				}
+				if fi.Comment != "" {
+					writeComment(&b, fi.Comment, "  ")
+				}
+				b.WriteString(fmt.Sprintf("  %s: %s;\n", fi.GoName, "string"))
+			}
+			b.WriteString("};\n")
+		} else {
+			b.WriteString(fmt.Sprintf("export type %s = z.infer<typeof %sSchema>;\n", si.Name, si.Name))
+		}
 	}
 
 	// Append client-specific types as Zod schemas

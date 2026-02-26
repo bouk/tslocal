@@ -1,8 +1,8 @@
 #![deny(missing_docs)]
+#![deny(clippy::unwrap_used, clippy::expect_used)]
 
 //! Client library for the Tailscale Local API.
 
-mod api;
 mod client;
 mod error;
 mod safesocket;

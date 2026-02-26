@@ -44,15 +44,14 @@ pub struct Status {
     #[serde(rename = "TailscaleIPs")]
     #[serde(default, deserialize_with = "deserialize_null_default")]
     pub tailscale_ips: Vec<String>,
-    #[serde(rename = "Self")]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub self_node: Option<Box<PeerStatus>>,
+    pub self_: Option<PeerStatus>,
     /// ExitNodeStatus describes the current exit node.
     /// If nil, an exit node is not in use.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub exit_node_status: Option<Box<ExitNodeStatus>>,
+    pub exit_node_status: Option<ExitNodeStatus>,
     /// Health contains health check problems.
     /// Empty means everything is good. (or at least that no known
     /// problems are detected)
@@ -68,7 +67,7 @@ pub struct Status {
     /// is currently connected to. When not connected, this field is nil.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub current_tailnet: Option<Box<TailnetStatus>>,
+    pub current_tailnet: Option<TailnetStatus>,
     /// CertDomains are the set of DNS names for which the control
     /// plane server will assist with provisioning TLS
     /// certificates. See SetDNSRequest for dns-01 ACME challenges
@@ -88,7 +87,7 @@ pub struct Status {
     /// the platform and client settings, it may not be available.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub client_version: Option<Box<ClientVersion>>,
+    pub client_version: Option<ClientVersion>,
 }
 
 /// PeerStatus describes a peer node and its current state.
@@ -256,7 +255,7 @@ pub struct PeerStatus {
     pub key_expiry: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub location: Option<Box<Location>>,
+    pub location: Option<Location>,
 }
 
 /// TailnetStatus is information about a Tailscale network ("tailnet").
@@ -903,7 +902,7 @@ pub struct Hostinfo {
     pub services: Vec<Service>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub net_info: Option<Box<NetInfo>>,
+    pub net_info: Option<NetInfo>,
     /// if advertised
     #[serde(rename = "sshHostKeys")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -938,11 +937,11 @@ pub struct Hostinfo {
     /// explicitly declared by a node.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub location: Option<Box<Location>>,
+    pub location: Option<Location>,
     /// TPM device metadata, if available
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub t_p_m: Option<Box<TPMInfo>>,
+    pub t_p_m: Option<TPMInfo>,
     /// ```text
     /// StateEncrypted reports whether the node state is stored encrypted on
     /// disk. The actual mechanism is platform-specific:
@@ -1223,7 +1222,7 @@ pub struct DERPMap {
     /// The rest of the DEPRMap fields, if zero, means unchanged.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub home_params: Option<Box<DERPHomeParams>>,
+    pub home_params: Option<DERPHomeParams>,
     /// Regions is the set of geographic regions running DERP node(s).
     /// 
     /// It's keyed by the DERPRegion.RegionID.
@@ -2228,7 +2227,7 @@ pub struct Notify {
     /// if non-nil && Valid, the new or current preferences
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub prefs: Option<Box<Prefs>>,
+    pub prefs: Option<Prefs>,
     /// if non-nil, the new or current netmap
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
@@ -2236,7 +2235,7 @@ pub struct Notify {
     /// if non-nil, the new or current wireguard stats
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub engine: Option<Box<EngineStatus>>,
+    pub engine: Option<EngineStatus>,
     /// if non-nil, UI should open a browser right now
     #[serde(rename = "BrowseToURL")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2278,7 +2277,7 @@ pub struct Notify {
     /// is available.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub client_version: Option<Box<ClientVersion>>,
+    pub client_version: Option<ClientVersion>,
     /// DriveShares tracks the full set of current DriveShares that we're
     /// publishing. Some client applications, like the MacOS and Windows clients,
     /// will listen for updates to this and handle serving these shares under
@@ -2423,6 +2422,12 @@ pub struct ServeConfig {
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     #[serde(default, deserialize_with = "deserialize_null_default")]
     pub foreground: HashMap<String, ServeConfig>,
+    /// ETag is the checksum of the serve config that's populated
+    /// by the LocalClient through the HTTP ETag header during a
+    /// GetServeConfig request and is translated to an If-Match header
+    /// during a SetServeConfig request.
+    #[serde(skip)]
+    pub e_tag: String,
 }
 
 /// TCPPortHandler describes what to do when handling a TCP
@@ -2622,10 +2627,10 @@ pub struct AutoUpdatePrefsMask {
 pub struct WhoIsResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub node: Option<Box<Node>>,
+    pub node: Option<Node>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub user_profile: Option<Box<UserProfile>>,
+    pub user_profile: Option<UserProfile>,
     /// CapMap is a map of capabilities to their values.
     /// See tailcfg.PeerCapMap and tailcfg.PeerCapability for details.
     #[serde(default, deserialize_with = "deserialize_null_default")]
@@ -2648,7 +2653,7 @@ pub struct WaitingFile {
 pub struct FileTarget {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub node: Option<Box<Node>>,
+    pub node: Option<Node>,
     /// PeerAPI is the http://ip:port URL base of the node's PeerAPI,
     /// without any path (not even a single slash).
     #[serde(rename = "PeerAPIURL")]

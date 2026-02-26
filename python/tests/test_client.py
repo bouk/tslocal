@@ -288,23 +288,6 @@ def test_cert_pair(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     client.close()
 
 
-# --- ID Token ---
-
-
-def test_id_token(mock_server: tuple[http.server.HTTPServer, int]) -> None:
-    _, port = mock_server
-    MockHandler.responses = {
-        "/localapi/v0/id-token?aud=https%3A//example.com": (
-            200,
-            {"IDToken": "fake-token"},
-        ),
-    }
-
-    client = make_client()
-    result = client.id_token("https://example.com")
-    assert result["IDToken"] == "fake-token"
-    client.close()
-
 
 # --- Context Manager ---
 

@@ -43,6 +43,9 @@ type FieldInfo struct {
 	// Whether this is a flattened/embedded struct
 	IsEmbedded bool
 
+	// Whether this field is skipped during serialization (json:"-")
+	IsSkipped bool
+
 	// Comment from Go source
 	Comment string
 }
@@ -106,16 +109,12 @@ func resolveType(t reflect.Type) (rust, python, ts string, isOptional, isSlice, 
 	// Handle pointer types
 	if t.Kind() == reflect.Ptr {
 		innerRust, innerPy, innerTS, _, innerSlice, innerMap, innerNested, innerNestedName := resolveType(t.Elem())
-		if innerNested {
-			return fmt.Sprintf("Option<Box<%s>>", innerRust), fmt.Sprintf("%s | None", innerPy), fmt.Sprintf("%s | undefined", innerTS),
-				true, innerSlice, innerMap, innerNested, innerNestedName
-		}
 		// If the inner type is already Option<...>, don't double-wrap
 		if strings.HasPrefix(innerRust, "Option<") {
-			return innerRust, innerPy, innerTS, true, innerSlice, innerMap, false, ""
+			return innerRust, innerPy, innerTS, true, innerSlice, innerMap, innerNested, innerNestedName
 		}
 		return fmt.Sprintf("Option<%s>", innerRust), fmt.Sprintf("%s | None", innerPy), fmt.Sprintf("%s | undefined", innerTS),
-			true, innerSlice, innerMap, false, ""
+			true, innerSlice, innerMap, innerNested, innerNestedName
 	}
 
 	// Handle slice types
@@ -293,9 +292,10 @@ func inspectStruct(t reflect.Type, comments map[string]*StructComments) *StructI
 		jsonTag := f.Tag.Get("json")
 		fi.JSONName, fi.Omit = parseJSONTag(jsonTag, f.Name)
 
-		// Skip fields with json:"-"
+		// Fields with json:"-" are included but marked as skipped
 		if fi.JSONName == "-" {
-			continue
+			fi.IsSkipped = true
+			fi.JSONName = f.Name
 		}
 
 		// Resolve types

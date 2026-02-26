@@ -6,14 +6,18 @@ import (
 	"unicode"
 )
 
-// rustKeywords that need to be renamed when used as field names.
-var rustKeywords = map[string]string{
-	"self":   "self_node",
-	"type":   "type_",
-	"struct": "struct_",
-	"enum":   "enum_",
-	"mod":    "mod_",
-	"ref":    "ref_",
+// rustKeywords that need to be escaped with r# when used as field names.
+// Note: "self", "super", "crate", and "Self" cannot use raw identifiers
+// and need aliases instead.
+var rustKeywords = map[string]bool{
+	"type": true, "struct": true,
+	"enum": true, "mod": true, "ref": true,
+}
+
+// rustKeywordAliases are keywords that cannot use raw identifiers and need
+// explicit renames.
+var rustKeywordAliases = map[string]string{
+	"self": "self_",
 }
 
 func generateRust(structs []*StructInfo) string {
@@ -55,14 +59,26 @@ func generateRust(structs []*StructInfo) string {
 			rustType := fi.RustType
 
 			// Handle Rust keywords
-			if replacement, ok := rustKeywords[rustFieldName]; ok {
-				rustFieldName = replacement
+			if alias, ok := rustKeywordAliases[rustFieldName]; ok {
+				rustFieldName = alias
+			}
+
+			// Fields with json:"-" are skipped during serialization
+			if fi.IsSkipped {
+				b.WriteString("    #[serde(skip)]\n")
+				b.WriteString(fmt.Sprintf("    pub %s: %s,\n", rustFieldName, rustType))
+				continue
 			}
 
 			// Determine if we need explicit serde(rename)
 			expectedPascal := snakeToPascal(rustFieldName)
 			if fi.JSONName != expectedPascal {
 				b.WriteString(fmt.Sprintf("    #[serde(rename = %q)]\n", fi.JSONName))
+			}
+
+			// Escape remaining Rust keywords with raw identifiers
+			if rustKeywords[rustFieldName] {
+				rustFieldName = "r#" + rustFieldName
 			}
 
 			// Handle omitempty/omitzero

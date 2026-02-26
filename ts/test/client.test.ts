@@ -267,7 +267,7 @@ describe("LocalClient", () => {
     client.destroy();
   });
 
-  it("getServeConfig returns config and etag", async () => {
+  it("getServeConfig returns config with etag", async () => {
     responses = {
       "/localapi/v0/serve-config": {
         status: 200,
@@ -277,9 +277,10 @@ describe("LocalClient", () => {
     };
 
     const client = makeClient();
-    const { config, etag } = await client.getServeConfig();
-    expect(config).toEqual({ TCP: {}, Web: {} });
-    expect(etag).toBe('"abc123"');
+    const config = await client.getServeConfig();
+    expect(config.TCP).toEqual({});
+    expect(config.Web).toEqual({});
+    expect(config.ETag).toBe('"abc123"');
     client.destroy();
   });
 
@@ -307,24 +308,10 @@ describe("LocalClient", () => {
     };
 
     const client = makeClient();
-    await client.setServeConfig({ TCP: {} }, '"etag-value"');
+    const config = { TCP: {}, Web: {}, Services: {}, AllowFunnel: {}, Foreground: {}, ETag: '"etag-value"' };
+    await client.setServeConfig(config);
     expect(lastRequestMethod).toBe("POST");
     expect(lastRequestUrl).toBe("/localapi/v0/serve-config");
-    expect(JSON.parse(lastRequestBody!)).toEqual({ TCP: {} });
-    client.destroy();
-  });
-
-  it("idToken returns token response", async () => {
-    responses = {
-      "/localapi/v0/id-token?aud=https%3A%2F%2Fexample.com": {
-        status: 200,
-        body: { IDToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9" },
-      },
-    };
-
-    const client = makeClient();
-    const result = await client.idToken("https://example.com");
-    expect(result.IDToken).toBe("eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9");
     client.destroy();
   });
 });

@@ -2211,7 +2211,15 @@ export const ServeConfigSchema = z.object({
    */
   Foreground: goMap(_ServeConfigRef),
 });
-export type ServeConfig = z.infer<typeof ServeConfigSchema>;
+export type ServeConfig = z.infer<typeof ServeConfigSchema> & {
+  /**
+   * ETag is the checksum of the serve config that's populated
+   * by the LocalClient through the HTTP ETag header during a
+   * GetServeConfig request and is translated to an If-Match header
+   * during a SetServeConfig request.
+   */
+  ETag: string;
+};
 
 /**
  * NetworkProfile is a subset of netmap.NetworkMap

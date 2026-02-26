@@ -68,7 +68,6 @@ func generatePython(structs []*StructInfo) string {
 		}
 
 		for _, fi := range si.Fields {
-			pyType := pythonTypeAnnotation(fi)
 			pyName := pyFieldName(fi.GoName)
 
 			if fi.Comment != "" {
@@ -76,6 +75,13 @@ func generatePython(structs []*StructInfo) string {
 					b.WriteString("    # " + line + "\n")
 				}
 			}
+
+			// Skipped fields (json:"-") are not included in generated types
+			if fi.IsSkipped {
+				continue
+			}
+
+			pyType := pythonTypeAnnotation(fi)
 
 			// Check if we need an explicit name override
 			expectedPascal := snakeToPascal(pyName)

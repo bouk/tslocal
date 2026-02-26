@@ -10,8 +10,10 @@ import {
 } from "./errors.js";
 import { Transport, type TransportOptions } from "./transport.js";
 import {
+  ServeConfigSchema,
   StatusSchema,
   WhoIsResponseSchema,
+  type ServeConfig,
   type Status,
   type WhoIsResponse,
 } from "./types.js";
@@ -149,8 +151,13 @@ export class LocalClient {
 
   // --- Config ---
 
-  /** Get the current serve configuration. Returns the config and its ETag. */
-  async getServeConfig(): Promise<{ config: Record<string, unknown>; etag: string }> {
+  /**
+   * Get the current serve configuration.
+   *
+   * The returned ServeConfig has its ETag field populated from the
+   * HTTP Etag response header.
+   */
+  async getServeConfig(): Promise<ServeConfig> {
     const resp = await this.doRequest("GET", "/localapi/v0/serve-config");
     if (resp.status !== 200) {
       const bodyStr = resp.body.toString("utf-8");
@@ -159,29 +166,22 @@ export class LocalClient {
       if (resp.status === 412) throw new PreconditionsFailedError(msg);
       throw new HttpError(resp.status, msg);
     }
-    const etag = (resp.headers["etag"] as string) ?? "";
-    return { config: parseJSON(resp.body.toString("utf-8")), etag };
+    const config = ServeConfigSchema.parse(parseJSON(resp.body.toString("utf-8"))) as ServeConfig;
+    config.ETag = (resp.headers["etag"] as string) ?? "";
+    return config;
   }
 
-  /** Set the serve configuration. Optionally pass an ETag for conditional update. */
-  async setServeConfig(
-    config: Record<string, unknown>,
-    etag?: string,
-  ): Promise<void> {
+  /**
+   * Set the serve configuration.
+   *
+   * The ETag field on the config is sent as the If-Match header
+   * for conditional updates.
+   */
+  async setServeConfig(config: ServeConfig): Promise<void> {
     const headers: Record<string, string> = {};
-    if (etag) headers["If-Match"] = etag;
+    if (config.ETag) headers["If-Match"] = config.ETag;
     const body = JSON.stringify(config, jsonReplacer);
     await this.doRequestNice("POST", "/localapi/v0/serve-config", body, headers);
-  }
-
-  // --- ID Token ---
-
-  /** Get an OIDC ID token for the given audience. */
-  async idToken(aud: string): Promise<Record<string, unknown>> {
-    const data = await this.get200(
-      `/localapi/v0/id-token?aud=${encodeURIComponent(aud)}`,
-    );
-    return parseJSON(data.toString("utf-8"));
   }
 
   /** Close the underlying transport and release resources. */

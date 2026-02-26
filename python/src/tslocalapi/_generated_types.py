@@ -1583,6 +1583,10 @@ class ServeConfig(msgspec.Struct, rename="pascal", omit_defaults=True):
     # serve' command run without the '--bg' flag. ServeConfig contained by Foreground is not expected itself to contain
     # another Foreground block.
     foreground: dict[str, ServeConfig] = {}
+    # ETag is the checksum of the serve config that's populated
+    # by the LocalClient through the HTTP ETag header during a
+    # GetServeConfig request and is translated to an If-Match header
+    # during a SetServeConfig request.
 
 
 class TCPPortHandler(msgspec.Struct, rename="pascal", omit_defaults=True):

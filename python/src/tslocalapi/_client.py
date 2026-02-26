@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 from urllib.parse import quote
 
@@ -19,6 +18,7 @@ from tslocalapi._errors import (
 )
 from tslocalapi._transport import Transport
 from tslocalapi._types import (
+    ServeConfig,
     Status,
     WhoIsResponse,
 )
@@ -158,31 +158,33 @@ class LocalClient:
 
     # --- Config ---
 
-    def get_serve_config(self) -> tuple[dict[str, Any], str]:
-        """Get the current serve config. Returns (config, etag)."""
+    def get_serve_config(self) -> ServeConfig:
+        """Get the current serve config.
+
+        The returned ServeConfig has its e_tag field populated from the
+        HTTP Etag response header.
+        """
         status, body, resp_headers = self._do_request("GET", "/localapi/v0/serve-config")
         if status != 200:
             msg = error_message_from_body(body) or body.decode()
             raise HttpError(status, msg)
-        etag = resp_headers.get("Etag", resp_headers.get("etag", ""))
-        return json.loads(body), etag
+        config = msgspec.json.decode(body, type=ServeConfig)
+        config.e_tag = resp_headers.get("Etag", resp_headers.get("etag", ""))
+        return config
 
-    def set_serve_config(self, config: dict[str, Any], etag: str = "") -> None:
-        """Set the serve config."""
+    def set_serve_config(self, config: ServeConfig) -> None:
+        """Set the serve config.
+
+        The e_tag field on the config is sent as the If-Match header
+        for conditional updates.
+        """
         headers: dict[str, str] = {}
-        if etag:
-            headers["If-Match"] = etag
-        body = json.dumps(config).encode()
+        if config.e_tag:
+            headers["If-Match"] = config.e_tag
+        body = msgspec.json.encode(config)
         self._do_request_nice(
             "POST", "/localapi/v0/serve-config", body, headers
         )
-
-    # --- ID Token ---
-
-    def id_token(self, aud: str) -> dict[str, Any]:
-        """Get an OIDC ID token for the given audience."""
-        data = self._get200(f"/localapi/v0/id-token?aud={quote(aud)}")
-        return json.loads(data)
 
     def close(self) -> None:
         """Close the underlying transport."""

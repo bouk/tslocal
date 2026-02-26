@@ -79,6 +79,7 @@ async fn read_macsys_same_user_proof_from(shared_dir: &str) -> Result<(u16, Stri
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 
