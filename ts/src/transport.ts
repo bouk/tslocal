@@ -1,5 +1,4 @@
 import * as http from "node:http";
-import * as net from "node:net";
 import {
   CURRENT_CAP_VERSION,
   LOCAL_API_HOST,
@@ -10,53 +9,37 @@ import {
 
 export interface TransportOptions {
   socketPath?: string;
-  tcpPort?: number;
-  token?: string;
   useSocketOnly?: boolean;
+}
+
+/**
+ * Discover TCP port and token for this request.
+ */
+async function resolvePortAndToken(useSocketOnly: boolean): Promise<PortAndToken | undefined> {
+  if (useSocketOnly) return undefined;
+  return localTcpPortAndToken();
 }
 
 /**
  * HTTP transport that connects to tailscaled.
  * Reuses connections via Node.js http.Agent keep-alive.
+ * Port and token are discovered per-request (matching Go's behavior),
+ * so the client adapts to daemon restarts and late starts.
  */
 export class Transport {
   private readonly socketPath: string;
-  private readonly tcpPort?: number;
-  private readonly token?: string;
   private readonly useSocketOnly: boolean;
   private readonly agent: http.Agent;
 
   constructor(opts: TransportOptions = {}) {
     this.socketPath = opts.socketPath ?? defaultSocketPath();
-    this.tcpPort = opts.tcpPort;
-    this.token = opts.token;
     this.useSocketOnly = opts.useSocketOnly ?? false;
 
-    // Auto-detect macOS TCP if not provided
-    if (!this.useSocketOnly && this.tcpPort === undefined) {
-      const detected = localTcpPortAndToken();
-      if (detected) {
-        this.tcpPort = detected.port;
-        this.token = detected.token;
-      }
-    }
-
-    // Create agent with keep-alive for connection reuse
-    if (this.usesTcp) {
-      this.agent = new http.Agent({
-        keepAlive: true,
-        keepAliveMsecs: 60_000,
-      });
-    } else {
-      this.agent = new http.Agent({
-        keepAlive: true,
-        keepAliveMsecs: 60_000,
-      });
-    }
-  }
-
-  get usesTcp(): boolean {
-    return !this.useSocketOnly && this.tcpPort !== undefined && this.token !== undefined;
+    // Single agent with keep-alive — pools connections by host:port key
+    this.agent = new http.Agent({
+      keepAlive: true,
+      keepAliveMsecs: 60_000,
+    });
   }
 
   async request(
@@ -65,6 +48,8 @@ export class Transport {
     body?: Buffer | string,
     extraHeaders?: Record<string, string>,
   ): Promise<{ status: number; body: Buffer; headers: http.IncomingHttpHeaders }> {
+    const portAndToken = await resolvePortAndToken(this.useSocketOnly);
+
     return new Promise((resolve, reject) => {
       const headers: Record<string, string> = {
         Host: LOCAL_API_HOST,
@@ -72,8 +57,8 @@ export class Transport {
         ...extraHeaders,
       };
 
-      if (this.usesTcp && this.token) {
-        const cred = Buffer.from(`:${this.token}`).toString("base64");
+      if (portAndToken) {
+        const cred = Buffer.from(`:${portAndToken.token}`).toString("base64");
         headers["Authorization"] = `Basic ${cred}`;
       }
 
@@ -84,9 +69,9 @@ export class Transport {
         agent: this.agent,
       };
 
-      if (this.usesTcp) {
+      if (portAndToken) {
         options.host = "127.0.0.1";
-        options.port = this.tcpPort;
+        options.port = portAndToken.port;
       } else {
         options.socketPath = this.socketPath;
       }

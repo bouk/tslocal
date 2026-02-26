@@ -1,6 +1,6 @@
 {
   "name": "tslocalapi",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Client library for the Tailscale Local API",
   "type": "module",
   "main": "dist/index.js",

@@ -6,15 +6,17 @@ use std::path::Path;
 /// Tries two methods:
 /// 1. `lsof` to find the IPNExtension process (macOS GUI app)
 /// 2. Filesystem at `/Library/Tailscale/` (macOS system extension)
-pub fn local_tcp_port_and_token() -> Result<(u16, String), io::Error> {
-    read_macos_same_user_proof()
-        .or_else(|_| read_macsys_same_user_proof())
+pub async fn local_tcp_port_and_token() -> Result<(u16, String), io::Error> {
+    match read_macos_same_user_proof().await {
+        Ok(result) => Ok(result),
+        Err(_) => read_macsys_same_user_proof().await,
+    }
 }
 
 /// Try to find port and token via lsof (macOS GUI app / IPNExtension).
-fn read_macos_same_user_proof() -> Result<(u16, String), io::Error> {
+async fn read_macos_same_user_proof() -> Result<(u16, String), io::Error> {
     let uid = unsafe { libc::getuid() };
-    let output = std::process::Command::new("lsof")
+    let output = tokio::process::Command::new("lsof")
         .args([
             "-n",
             "-a",
@@ -23,7 +25,8 @@ fn read_macos_same_user_proof() -> Result<(u16, String), io::Error> {
             "IPNExtension",
             "-F",
         ])
-        .output()?;
+        .output()
+        .await?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     parse_lsof_output(&stdout)
@@ -51,13 +54,14 @@ pub(crate) fn parse_lsof_output(output: &str) -> Result<(u16, String), io::Error
 }
 
 /// Try to find port and token via filesystem (macOS system extension).
-fn read_macsys_same_user_proof() -> Result<(u16, String), io::Error> {
-    read_macsys_same_user_proof_from("/Library/Tailscale")
+async fn read_macsys_same_user_proof() -> Result<(u16, String), io::Error> {
+    read_macsys_same_user_proof_from("/Library/Tailscale").await
 }
 
-fn read_macsys_same_user_proof_from(shared_dir: &str) -> Result<(u16, String), io::Error> {
+async fn read_macsys_same_user_proof_from(shared_dir: &str) -> Result<(u16, String), io::Error> {
     let port_path = Path::new(shared_dir).join("ipnport");
-    let port_str = std::fs::read_link(&port_path)
+    let port_str = tokio::fs::read_link(&port_path)
+        .await
         .map_err(|e| io::Error::new(io::ErrorKind::NotFound, e))?
         .to_string_lossy()
         .to_string();
@@ -66,7 +70,10 @@ fn read_macsys_same_user_proof_from(shared_dir: &str) -> Result<(u16, String), i
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
     let token_path = Path::new(shared_dir).join(format!("sameuserproof-{}", port));
-    let token = std::fs::read_to_string(&token_path)?.trim().to_string();
+    let token = tokio::fs::read_to_string(&token_path)
+        .await?
+        .trim()
+        .to_string();
 
     Ok((port, token))
 }
@@ -97,8 +104,8 @@ n/Users/someone/Library/Group Containers/io.tailscale.ipn.macos/sameuserproof-12
         assert!(parse_lsof_output("").is_err());
     }
 
-    #[test]
-    fn test_read_macsys_same_user_proof_from_dir() {
+    #[tokio::test]
+    async fn test_read_macsys_same_user_proof_from_dir() {
         let dir = tempfile::tempdir().unwrap();
         let shared_dir = dir.path();
 
@@ -108,15 +115,15 @@ n/Users/someone/Library/Group Containers/io.tailscale.ipn.macos/sameuserproof-12
         std::fs::write(shared_dir.join("sameuserproof-8080"), "mytoken123\n").unwrap();
 
         let (port, token) =
-            read_macsys_same_user_proof_from(shared_dir.to_str().unwrap()).unwrap();
+            read_macsys_same_user_proof_from(shared_dir.to_str().unwrap()).await.unwrap();
         assert_eq!(port, 8080);
         assert_eq!(token, "mytoken123");
     }
 
-    #[test]
-    fn test_read_macsys_same_user_proof_missing() {
+    #[tokio::test]
+    async fn test_read_macsys_same_user_proof_missing() {
         let dir = tempfile::tempdir().unwrap();
-        let result = read_macsys_same_user_proof_from(dir.path().to_str().unwrap());
+        let result = read_macsys_same_user_proof_from(dir.path().to_str().unwrap()).await;
         assert!(result.is_err());
     }
 }

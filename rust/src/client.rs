@@ -1,6 +1,6 @@
 use crate::error::{error_message_from_body, Error};
 use crate::safesocket;
-use crate::transport::TransportConfig;
+use crate::transport::{TailscaleConnector, TransportConfig, auth_header_for_token, resolve_port_and_token};
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
 use hyper::body::Incoming;
@@ -11,63 +11,51 @@ use hyper_util::rt::TokioExecutor;
 /// Client for the Tailscale Local API.
 ///
 /// Connections are pooled and reused via hyper's connection management.
+/// TCP port and auth token are discovered per-request (matching Go's behavior),
+/// so the client adapts to daemon restarts and late starts.
 pub struct Client {
     config: TransportConfig,
-    unix_client: Option<HyperClient<hyperlocal::UnixConnector, Full<Bytes>>>,
-    tcp_client: Option<HyperClient<hyper_util::client::legacy::connect::HttpConnector, Full<Bytes>>>,
+    client: HyperClient<TailscaleConnector, Full<Bytes>>,
 }
 
 impl Client {
-    /// Create a new client with auto-detected transport settings.
+    /// Create a new client with default transport settings.
+    ///
+    /// Port and token are discovered per-request, so the client works even if
+    /// the daemon isn't running at creation time.
     pub fn new() -> Self {
-        Self::with_config(TransportConfig::detect())
+        Self::with_config(TransportConfig::default())
     }
 
     /// Create a new client with explicit transport configuration.
     pub fn with_config(config: TransportConfig) -> Self {
-        let mut client = Self {
-            unix_client: None,
-            tcp_client: None,
-            config,
-        };
-
-        if client.config.uses_tcp() {
-            client.tcp_client = Some(
-                HyperClient::builder(TokioExecutor::new())
-                    .pool_idle_timeout(std::time::Duration::from_secs(60))
-                    .build_http(),
-            );
-        } else {
-            client.unix_client = Some(
-                HyperClient::builder(TokioExecutor::new())
-                    .pool_idle_timeout(std::time::Duration::from_secs(60))
-                    .build(hyperlocal::UnixConnector),
-            );
-        }
-
-        client
+        let connector = TailscaleConnector::new(&config);
+        let client = HyperClient::builder(TokioExecutor::new())
+            .pool_idle_timeout(std::time::Duration::from_secs(60))
+            .build(connector);
+        Self { config, client }
     }
 
     /// Send an HTTP request to the local API and return the response.
+    ///
+    /// Discovers TCP token per-request for the auth header (the connector
+    /// independently discovers port for connection routing).
     pub(crate) async fn send_request(
         &self,
         req: Request<Full<Bytes>>,
     ) -> Result<Response<Incoming>, Error> {
-        let result = if self.config.uses_tcp() {
-            self.tcp_client
-                .as_ref()
-                .expect("tcp_client not initialized")
-                .request(req)
-                .await
+        let req = if let Some((_, ref token)) = resolve_port_and_token(self.config.use_socket_only).await {
+            let (mut parts, body) = req.into_parts();
+            parts.headers.insert(
+                hyper::header::AUTHORIZATION,
+                auth_header_for_token(token).parse().unwrap(),
+            );
+            Request::from_parts(parts, body)
         } else {
-            self.unix_client
-                .as_ref()
-                .expect("unix_client not initialized")
-                .request(req)
-                .await
+            req
         };
 
-        result.map_err(|e| Error::Connection {
+        self.client.request(req).await.map_err(|e| Error::Connection {
             message: e.to_string(),
         })
     }
@@ -80,11 +68,9 @@ impl Client {
         body: Option<&[u8]>,
         extra_headers: &[(&str, &str)],
     ) -> Result<Request<Full<Bytes>>, Error> {
-        let uri: hyper::Uri = if self.config.uses_tcp() {
-            format!("{}{}", self.config.base_url(), path).parse().map_err(|e: hyper::http::uri::InvalidUri| Error::Other(e.to_string()))?
-        } else {
-            hyperlocal::Uri::new(&self.config.socket_path, path).into()
-        };
+        let uri: hyper::Uri = format!("http://{}{}", safesocket::LOCAL_API_HOST, path)
+            .parse()
+            .map_err(|e: hyper::http::uri::InvalidUri| Error::Other(e.to_string()))?;
 
         let body_bytes = body.map(Bytes::copy_from_slice).unwrap_or_default();
 
@@ -93,10 +79,6 @@ impl Client {
             .uri(uri)
             .header("Host", safesocket::LOCAL_API_HOST)
             .header("Tailscale-Cap", safesocket::CURRENT_CAP_VERSION.to_string());
-
-        if let Some(auth) = self.config.auth_header() {
-            builder = builder.header("Authorization", auth);
-        }
 
         for (key, value) in extra_headers {
             builder = builder.header(*key, *value);

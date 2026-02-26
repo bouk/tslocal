@@ -1,5 +1,5 @@
 import * as http from "node:http";
-import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { describe, expect, it, beforeAll, afterAll, vi } from "vitest";
 import { LocalClient } from "../src/client.js";
 import {
   AccessDeniedError,
@@ -8,12 +8,24 @@ import {
   PreconditionsFailedError,
 } from "../src/errors.js";
 
+// Mock safesocket so localTcpPortAndToken returns our test server
+vi.mock("../src/safesocket.js", async (importOriginal) => {
+  const mod = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...mod,
+    localTcpPortAndToken: vi.fn(async () => undefined),
+  };
+});
+
+import { localTcpPortAndToken } from "../src/safesocket.js";
+
 let server: http.Server;
 let port: number;
 let responses: Record<string, { status: number; body: unknown; method?: string; headers?: Record<string, string> }> = {};
 let lastRequestBody: string | undefined;
 let lastRequestMethod: string | undefined;
 let lastRequestUrl: string | undefined;
+let lastRequestHeaders: http.IncomingHttpHeaders = {};
 
 beforeAll(
   () =>
@@ -25,6 +37,7 @@ beforeAll(
 
         lastRequestMethod = req.method;
         lastRequestUrl = req.url;
+        lastRequestHeaders = req.headers;
 
         const chunks: Buffer[] = [];
         req.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -53,6 +66,11 @@ beforeAll(
         if (addr && typeof addr === "object") {
           port = addr.port;
         }
+        // Point discovery at mock server
+        vi.mocked(localTcpPortAndToken).mockResolvedValue({
+          port,
+          token: "test-token",
+        });
         resolve();
       });
     }),
@@ -61,15 +79,13 @@ beforeAll(
 afterAll(
   () =>
     new Promise<void>((resolve) => {
+      vi.restoreAllMocks();
       server.close(() => resolve());
     }),
 );
 
 function makeClient(): LocalClient {
-  return new LocalClient({
-    tcpPort: port,
-    token: "test-token",
-  });
+  return new LocalClient();
 }
 
 describe("LocalClient", () => {
@@ -177,31 +193,23 @@ describe("LocalClient", () => {
   });
 
   it("sends auth header", async () => {
-    let receivedAuth = "";
-    const authServer = http.createServer((req, res) => {
-      receivedAuth = req.headers["authorization"] ?? "";
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
+    responses = {
+      "/localapi/v0/status": {
+        status: 200,
+        body: {
           Version: "1.94.1",
           BackendState: "Running",
           TUN: false,
           Peer: {},
           AuthURL: "",
-        }),
-      );
-    });
+        },
+      },
+    };
 
-    await new Promise<void>((resolve) => {
-      authServer.listen(0, "127.0.0.1", resolve);
-    });
-    const authPort = (authServer.address() as { port: number }).port;
-
-    const client = new LocalClient({ tcpPort: authPort, token: "test-token" });
+    const client = makeClient();
     await client.status();
-    expect(receivedAuth).toMatch(/^Basic /);
+    expect(lastRequestHeaders["authorization"]).toMatch(/^Basic /);
     client.destroy();
-    await new Promise<void>((resolve) => authServer.close(() => resolve()));
   });
 
   it("certPair parses combined PEM response", async () => {

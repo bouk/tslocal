@@ -17,6 +17,8 @@ from tslocalapi._errors import (
     PeerNotFoundError,
     PreconditionsFailedError,
 )
+from tslocalapi._safesocket import PortAndToken
+import tslocalapi._transport as transport_mod
 
 
 class MockHandler(http.server.BaseHTTPRequestHandler):
@@ -82,7 +84,7 @@ class MockHandler(http.server.BaseHTTPRequestHandler):
 
 
 @pytest.fixture
-def mock_server() -> tuple[http.server.HTTPServer, int]:
+def mock_server(monkeypatch: pytest.MonkeyPatch) -> tuple[http.server.HTTPServer, int]:
     """Create a mock HTTP server on a random port."""
     # Find free port
     sock = socket.socket()
@@ -94,14 +96,21 @@ def mock_server() -> tuple[http.server.HTTPServer, int]:
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
+    # Patch discovery to point at mock server
+    monkeypatch.setattr(
+        transport_mod,
+        "_resolve_port_and_token",
+        lambda use_socket_only: PortAndToken(port, "test-token"),
+    )
+
     yield server, port
 
     server.shutdown()
 
 
-def make_client(port: int) -> LocalClient:
+def make_client() -> LocalClient:
     """Create a client pointing at the mock server."""
-    return LocalClient(tcp_port=port, token="test-token", use_socket_only=False)
+    return LocalClient()
 
 
 def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
@@ -132,7 +141,7 @@ def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
         ),
     }
 
-    client = make_client(port)
+    client = make_client()
     status = client.status()
     assert status.version == "1.94.1"
     assert status.backend_state == "Running"
@@ -156,7 +165,7 @@ def test_status_without_peers(mock_server: tuple[http.server.HTTPServer, int]) -
         ),
     }
 
-    client = make_client(port)
+    client = make_client()
     status = client.status_without_peers()
     assert status.version == "1.94.1"
     client.close()
@@ -168,7 +177,7 @@ def test_whois_not_found(mock_server: tuple[http.server.HTTPServer, int]) -> Non
         "/localapi/v0/whois?addr=1.2.3.4": (404, {"error": "peer not found"}),
     }
 
-    client = make_client(port)
+    client = make_client()
     with pytest.raises(PeerNotFoundError):
         client.who_is("1.2.3.4")
     client.close()
@@ -186,7 +195,7 @@ def test_who_is_proto(mock_server: tuple[http.server.HTTPServer, int]) -> None:
         ),
     }
 
-    client = make_client(port)
+    client = make_client()
     result = client.who_is_proto("tcp", "100.64.0.1:80")
     assert result.user_profile is not None
     assert result.user_profile.login_name == "user@example.com"
@@ -199,7 +208,7 @@ def test_access_denied(mock_server: tuple[http.server.HTTPServer, int]) -> None:
         "/localapi/v0/status": (403, {"error": "access denied"}),
     }
 
-    client = make_client(port)
+    client = make_client()
     with pytest.raises(AccessDeniedError):
         client.status()
     client.close()
@@ -211,7 +220,7 @@ def test_preconditions_failed(mock_server: tuple[http.server.HTTPServer, int]) -
         "/localapi/v0/status": (412, {"error": "state mismatch"}),
     }
 
-    client = make_client(port)
+    client = make_client()
     with pytest.raises(PreconditionsFailedError):
         client.status()
     client.close()
@@ -223,7 +232,7 @@ def test_http_error(mock_server: tuple[http.server.HTTPServer, int]) -> None:
         "/localapi/v0/status": (500, {"error": "internal error"}),
     }
 
-    client = make_client(port)
+    client = make_client()
     with pytest.raises(HttpError) as exc_info:
         client.status()
     assert exc_info.value.status == 500
@@ -248,7 +257,7 @@ def test_auth_header_sent(mock_server: tuple[http.server.HTTPServer, int]) -> No
     }
 
     try:
-        client = make_client(port)
+        client = make_client()
         client.status()
         assert len(received_auth) > 0
         assert received_auth[0].startswith("Basic ")
@@ -272,7 +281,7 @@ def test_cert_pair(mock_server: tuple[http.server.HTTPServer, int]) -> None:
         ),
     }
 
-    client = make_client(port)
+    client = make_client()
     cert, key = client.cert_pair("example.ts.net")
     assert b"CERTIFICATE" in cert
     assert b"PRIVATE KEY" in key
@@ -291,7 +300,7 @@ def test_id_token(mock_server: tuple[http.server.HTTPServer, int]) -> None:
         ),
     }
 
-    client = make_client(port)
+    client = make_client()
     result = client.id_token("https://example.com")
     assert result["IDToken"] == "fake-token"
     client.close()
@@ -309,6 +318,6 @@ def test_context_manager(mock_server: tuple[http.server.HTTPServer, int]) -> Non
         ),
     }
 
-    with make_client(port) as client:
+    with make_client() as client:
         status = client.status()
         assert status.version == "1.94.1"

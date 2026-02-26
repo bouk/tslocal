@@ -19,55 +19,56 @@ from tslocalapi._safesocket import (
 )
 
 
+def _resolve_port_and_token(use_socket_only: bool) -> PortAndToken | None:
+    """Discover TCP port and token for this request."""
+    if use_socket_only:
+        return None
+    if platform.system() == "Darwin":
+        return local_tcp_port_and_token()
+    return None
+
+
 class Transport:
     """HTTP transport that connects to tailscaled.
 
     Reuses connections where possible via HTTP/1.1 keep-alive.
+    Port and token are discovered per-request (matching Go's behavior),
+    so the client adapts to daemon restarts and late starts.
     """
 
     def __init__(
         self,
         socket_path: str | None = None,
-        tcp_port: int | None = None,
-        token: str | None = None,
         use_socket_only: bool = False,
     ) -> None:
         self._socket_path = socket_path or default_socket_path()
-        self._tcp_port = tcp_port
-        self._token = token
         self._use_socket_only = use_socket_only
         self._conn: http.client.HTTPConnection | None = None
-
-        # Auto-detect macOS TCP if not provided
-        if not use_socket_only and tcp_port is None and platform.system() == "Darwin":
-            result = local_tcp_port_and_token()
-            if result is not None:
-                self._tcp_port = result.port
-                self._token = result.token
+        self._conn_port: int | None = None
 
     @classmethod
     def detect(cls) -> Transport:
         """Create a transport with auto-detected settings."""
         return cls()
 
-    @property
-    def uses_tcp(self) -> bool:
-        return (
-            not self._use_socket_only
-            and self._tcp_port is not None
-            and self._token is not None
-        )
-
-    def _get_connection(self) -> http.client.HTTPConnection:
+    def _get_connection(self, port_and_token: PortAndToken | None) -> http.client.HTTPConnection:
         """Get or create an HTTP connection, reusing existing ones."""
-        if self._conn is not None:
-            return self._conn
-
-        if self.uses_tcp:
-            assert self._tcp_port is not None
-            self._conn = http.client.HTTPConnection("127.0.0.1", self._tcp_port)
+        if port_and_token is not None:
+            # If port changed, close old connection
+            if self._conn is not None and self._conn_port != port_and_token.port:
+                self._close_connection()
+            if self._conn is not None:
+                return self._conn
+            self._conn = http.client.HTTPConnection("127.0.0.1", port_and_token.port)
+            self._conn_port = port_and_token.port
         else:
+            if self._conn is not None and self._conn_port is not None:
+                # Was TCP, now Unix — close old connection
+                self._close_connection()
+            if self._conn is not None:
+                return self._conn
             self._conn = _UnixHTTPConnection(self._socket_path)
+            self._conn_port = None
         return self._conn
 
     def _close_connection(self) -> None:
@@ -77,6 +78,7 @@ class Transport:
             except Exception:
                 pass
             self._conn = None
+            self._conn_port = None
 
     def request(
         self,
@@ -86,18 +88,20 @@ class Transport:
         headers: dict[str, str] | None = None,
     ) -> tuple[int, bytes, dict[str, str]]:
         """Send an HTTP request and return (status_code, body, response_headers)."""
+        port_and_token = _resolve_port_and_token(self._use_socket_only)
+
         all_headers: dict[str, str] = {
             "Host": LOCAL_API_HOST,
             "Tailscale-Cap": str(CURRENT_CAP_VERSION),
         }
-        if self.uses_tcp and self._token:
-            cred = b64encode(f":{self._token}".encode()).decode()
+        if port_and_token is not None:
+            cred = b64encode(f":{port_and_token.token}".encode()).decode()
             all_headers["Authorization"] = f"Basic {cred}"
         if headers:
             all_headers.update(headers)
 
         try:
-            conn = self._get_connection()
+            conn = self._get_connection(port_and_token)
             conn.request(method, path, body=body, headers=all_headers)
             resp = conn.getresponse()
             data = resp.read()
@@ -105,7 +109,7 @@ class Transport:
         except (ConnectionError, OSError, http.client.HTTPException):
             # Connection broken, close and retry once
             self._close_connection()
-            conn = self._get_connection()
+            conn = self._get_connection(port_and_token)
             conn.request(method, path, body=body, headers=all_headers)
             resp = conn.getresponse()
             data = resp.read()

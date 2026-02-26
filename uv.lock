@@ -189,7 +189,7 @@ wheels = [
 
 [[package]]
 name = "tslocalapi"
-version = "0.0.2"
+version = "0.0.4"
 source = { editable = "." }
 dependencies = [
     { name = "msgspec" },

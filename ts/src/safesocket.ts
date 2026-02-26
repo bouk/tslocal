@@ -1,7 +1,8 @@
-import { execFileSync } from "node:child_process";
-import { readFileSync, readlinkSync } from "node:fs";
+import { execFile } from "node:child_process";
+import { readFile, readlink } from "node:fs/promises";
 import { platform } from "node:os";
 import { join } from "node:path";
+import { promisify } from "node:util";
 
 export const LOCAL_API_HOST = "local-tailscaled.sock";
 export const CURRENT_CAP_VERSION = 131;
@@ -21,29 +22,34 @@ export function defaultSocketPath(): string {
 }
 
 /** Attempt to discover macOS TCP port and token for tailscaled. */
-export function localTcpPortAndToken(): PortAndToken | undefined {
+export async function localTcpPortAndToken(): Promise<PortAndToken | undefined> {
   if (platform() !== "darwin") {
     return undefined;
   }
 
   // Try lsof method first (macOS GUI app)
-  const result = readMacosSameUserProof();
+  const result = await readMacosSameUserProof();
   if (result) return result;
 
   // Try filesystem method (macOS system extension)
   return readMacsysSameUserProof();
 }
 
-function readMacosSameUserProof(): PortAndToken | undefined {
+const execFileP = promisify(execFile);
+
+async function readMacosSameUserProof(): Promise<PortAndToken | undefined> {
   try {
     const uid = process.getuid?.();
     if (uid === undefined) return undefined;
 
-    const output = execFileSync(
-      "lsof",
-      ["-n", "-a", `-u${uid}`, "-c", "IPNExtension", "-F"],
-      { encoding: "utf-8", timeout: 5000 },
-    );
+    const { stdout: output } = await execFileP("lsof", [
+      "-n",
+      "-a",
+      `-u${uid}`,
+      "-c",
+      "IPNExtension",
+      "-F",
+    ]);
     return parseLsofOutput(output);
   } catch {
     return undefined;
@@ -69,14 +75,17 @@ export function parseLsofOutput(output: string): PortAndToken | undefined {
   return undefined;
 }
 
-function readMacsysSameUserProof(
+async function readMacsysSameUserProof(
   sharedDir = "/Library/Tailscale",
-): PortAndToken | undefined {
+): Promise<PortAndToken | undefined> {
   try {
-    const portStr = readlinkSync(join(sharedDir, "ipnport"), "utf-8");
+    const portPath = join(sharedDir, "ipnport");
+    const portStr = await readlink(portPath, "utf-8");
     const port = parseInt(portStr, 10);
     if (isNaN(port)) return undefined;
-    const token = readFileSync(join(sharedDir, `sameuserproof-${port}`), "utf-8").trim();
+    const tokenPath = join(sharedDir, `sameuserproof-${port}`);
+    const tokenRaw = await readFile(tokenPath, "utf-8");
+    const token = tokenRaw.trim();
     return { port, token };
   } catch {
     return undefined;

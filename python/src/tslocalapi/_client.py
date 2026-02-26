@@ -33,14 +33,10 @@ class LocalClient:
     def __init__(
         self,
         socket_path: str | None = None,
-        tcp_port: int | None = None,
-        token: str | None = None,
         use_socket_only: bool = False,
     ) -> None:
         self._transport = Transport(
             socket_path=socket_path,
-            tcp_port=tcp_port,
-            token=token,
             use_socket_only=use_socket_only,
         )
 
