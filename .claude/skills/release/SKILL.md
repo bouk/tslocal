@@ -2,12 +2,11 @@
 name: release
 description: Bump version, commit, tag, build, publish, and push a new release of the tslocalapi libraries. Use when the user says "release", "publish", or "bump version".
 disable-model-invocation: true
-argument-hint: <npm-otp>
 ---
 
 # Release tslocalapi
 
-Determine the next version by reading the current version from `Cargo.toml` and incrementing the patch number.
+Determine the next version by reading the current version from `Cargo.toml` and incrementing the patch number unless specified otherwise.
 
 ## Steps
 
@@ -28,7 +27,7 @@ Determine the next version by reading the current version from `Cargo.toml` and 
    ```sh
    cargo publish
    uv build && uv publish
-   npm publish --otp=<otp from $0>
+   npm publish --otp=$(op item get NPM --otp)
    ```
 
 6. **Push**: `git push && git push --tags`

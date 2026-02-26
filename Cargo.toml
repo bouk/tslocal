@@ -1,6 +1,6 @@
 [package]
 name = "tslocalapi"
-version = "0.0.7"
+version = "0.0.8"
 edition = "2024"
 description = "Client library for the Tailscale Local API"
 license = "BSD-3-Clause"
