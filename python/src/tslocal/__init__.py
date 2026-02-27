@@ -1,6 +1,6 @@
 """Client library for the Tailscale Local API."""
 
-from tslocal._client import LocalClient
+from tslocal._client import Client
 from tslocal._errors import (
     TailscaleError,
     AccessDeniedError,
@@ -25,7 +25,7 @@ from tslocal._types import (
 __version__ = "0.1.0"
 
 __all__ = [
-    "LocalClient",
+    "Client",
     "TailscaleError",
     "AccessDeniedError",
     "PreconditionsFailedError",

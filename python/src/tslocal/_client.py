@@ -24,7 +24,7 @@ from tslocal._types import (
 )
 
 
-class LocalClient:
+class Client:
     """Client for the Tailscale Local API.
 
     Connections are reused via HTTP/1.1 keep-alive.
@@ -190,7 +190,7 @@ class LocalClient:
         """Close the underlying transport."""
         self._transport.close()
 
-    def __enter__(self) -> LocalClient:
+    def __enter__(self) -> Client:
         return self
 
     def __exit__(self, *args: Any) -> None:

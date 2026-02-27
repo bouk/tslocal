@@ -1,4 +1,4 @@
-"""Tests for the LocalClient using a mock HTTP server."""
+"""Tests for the Client using a mock HTTP server."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from tslocal._client import LocalClient
+from tslocal._client import Client
 from tslocal._errors import (
     AccessDeniedError,
     HttpError,
@@ -108,9 +108,9 @@ def mock_server(monkeypatch: pytest.MonkeyPatch) -> tuple[http.server.HTTPServer
     server.shutdown()
 
 
-def make_client() -> LocalClient:
+def make_client() -> Client:
     """Create a client pointing at the mock server."""
-    return LocalClient()
+    return Client()
 
 
 def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:

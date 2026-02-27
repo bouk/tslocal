@@ -37,11 +37,11 @@ All three libraries communicate with the local Tailscale daemon over a Unix doma
 ### Rust
 
 ```rust
-use tslocal::LocalClient;
+use tslocal::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = LocalClient::new();
+    let client = Client::new();
     let status = client.status().await?;
     println!("Tailscale version: {}", status.version);
     Ok(())
@@ -51,9 +51,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Python
 
 ```python
-from tslocal import LocalClient
+from tslocal import Client
 
-with LocalClient() as client:
+with Client() as client:
     status = client.status()
     print(f"Tailscale version: {status.version}")
 ```
@@ -61,9 +61,9 @@ with LocalClient() as client:
 ### TypeScript
 
 ```typescript
-import { LocalClient } from "tslocal";
+import { Client } from "tslocal";
 
-const client = new LocalClient();
+const client = new Client();
 const status = await client.status();
 console.log(`Tailscale version: ${status.Version}`);
 client.destroy();

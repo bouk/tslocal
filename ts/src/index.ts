@@ -1,4 +1,4 @@
-export { LocalClient } from "./client.js";
+export { Client } from "./client.js";
 export {
   TailscaleError,
   AccessDeniedError,

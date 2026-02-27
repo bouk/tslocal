@@ -23,7 +23,7 @@ import {
  *
  * Connections are reused via HTTP keep-alive.
  */
-export class LocalClient {
+export class Client {
   private readonly transport: Transport;
 
   constructor(opts: TransportOptions = {}) {

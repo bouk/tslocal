@@ -1,7 +1,7 @@
-import { LocalClient } from "../src/index.js";
+import { Client } from "../src/index.js";
 import { jsonReplacer } from "../src/json.js";
 
-const client = new LocalClient();
+const client = new Client();
 const config = await client.getServeConfig();
 console.error(`ETag: ${config.ETag}`);
 console.log(JSON.stringify(config, jsonReplacer, 2));

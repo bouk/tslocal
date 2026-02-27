@@ -1,6 +1,6 @@
 import * as http from "node:http";
 import { describe, expect, it, beforeAll, afterAll, vi } from "vitest";
-import { LocalClient } from "../src/client.js";
+import { Client } from "../src/client.js";
 import {
   AccessDeniedError,
   HttpError,
@@ -84,11 +84,11 @@ afterAll(
     }),
 );
 
-function makeClient(): LocalClient {
-  return new LocalClient();
+function makeClient(): Client {
+  return new Client();
 }
 
-describe("LocalClient", () => {
+describe("Client", () => {
   it("fetches status", async () => {
     responses = {
       "/localapi/v0/status": {

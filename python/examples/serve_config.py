@@ -4,9 +4,9 @@ import sys
 
 import msgspec
 
-from tslocal import LocalClient
+from tslocal import Client
 
-with LocalClient() as client:
+with Client() as client:
     config = client.get_serve_config()
     print(f"ETag: {config.e_tag}", file=sys.stderr)
     # Reset e_tag to default so omit_defaults excludes it from output

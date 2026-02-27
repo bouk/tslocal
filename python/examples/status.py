@@ -5,9 +5,9 @@ import sys
 
 import msgspec
 
-from tslocal import LocalClient
+from tslocal import Client
 
-with LocalClient() as client:
+with Client() as client:
     status = client.status()
     json.dump(msgspec.to_builtins(status), sys.stdout, indent=2)
     sys.stdout.write("\n")
