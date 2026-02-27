@@ -4,11 +4,7 @@ import msgspec
 
 from tslocalapi._types import (
     CurrentTailnet,
-    LoginProfile,
-    MaskedPrefs,
     PeerStatus,
-    Prefs,
-    ProfileStatus,
     Status,
     UserProfile,
     WhoIsResponse,
@@ -80,43 +76,6 @@ def test_status_to_dict_roundtrip() -> None:
     assert result["BackendState"] == "Running"
 
 
-def test_prefs_from_dict() -> None:
-    data = {
-        "ControlURL": "https://controlplane.tailscale.com",
-        "RouteAll": False,
-        "ExitNodeID": "",
-        "ExitNodeIP": "",
-        "ExitNodeAllowLANAccess": False,
-        "CorpDNS": True,
-        "RunSSH": False,
-        "WantRunning": True,
-        "ShieldsUp": False,
-        "Hostname": "myhost",
-        "AdvertiseTags": [],
-    }
-    prefs = msgspec.convert(data, Prefs)
-    assert prefs.control_url == "https://controlplane.tailscale.com"
-    assert prefs.corp_dns is True
-    assert prefs.want_running is True
-    assert prefs.hostname == "myhost"
-
-
-def test_masked_prefs_to_dict() -> None:
-    mp = MaskedPrefs(
-        hostname="newhost",
-        want_running=True,
-        hostname_set=True,
-        want_running_set=True,
-    )
-    d = msgspec.to_builtins(mp)
-    assert d["Hostname"] == "newhost"
-    assert d["WantRunning"] is True
-    assert d["HostnameSet"] is True
-    assert d["WantRunningSet"] is True
-    # Unset *Set fields are omitted (matching Go's omitempty behavior)
-    assert "RouteAllSet" not in d
-
-
 def test_whois_response_from_dict() -> None:
     data = {
         "Node": {"ID": 123, "Name": "myhost"},
@@ -132,29 +91,3 @@ def test_whois_response_from_dict() -> None:
     assert resp.node.name == "myhost"
     assert resp.user_profile is not None
     assert resp.user_profile.login_name == "user@example.com"
-
-
-def test_profile_status_from_dict() -> None:
-    data = {
-        "CurrentProfile": {
-            "ID": "p1",
-            "Name": "default",
-            "ControlURL": "https://controlplane.tailscale.com",
-        },
-        "AllProfiles": [
-            {
-                "ID": "p1",
-                "Name": "default",
-                "ControlURL": "https://controlplane.tailscale.com",
-            },
-            {
-                "ID": "p2",
-                "Name": "work",
-                "ControlURL": "https://work.tailscale.com",
-            },
-        ],
-    }
-    ps = msgspec.convert(data, ProfileStatus)
-    assert ps.current_profile.id == "p1"
-    assert len(ps.all_profiles) == 2
-    assert ps.all_profiles[1].name == "work"

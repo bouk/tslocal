@@ -12,7 +12,6 @@ import (
 	"tailscale.com/tka"
 	"tailscale.com/types/key"
 	"tailscale.com/types/opt"
-	"tailscale.com/types/views"
 )
 
 // FieldInfo describes a single struct field for code generation.
@@ -91,10 +90,6 @@ var knownTypeMap = map[reflect.Type][3]string{
 	reflect.TypeOf(tailcfg.RawMessage("")):      {"serde_json::Value", "Any", "unknown"},
 	reflect.TypeOf(tka.NodeKeySignature{}):      {"serde_json::Value", "Any", "unknown"},
 }
-
-// additionalStructTypes tracks struct types we discover during reflection
-// that we also need to generate.
-var additionalStructTypes []reflect.Type
 
 // resolveType resolves a Go type to target language type strings.
 // It returns (rust, python, typescript, isOptional, isSlice, isMap, isNestedStruct, nestedName).
@@ -196,10 +191,6 @@ func resolveType(t reflect.Type) (rust, python, ts string, isOptional, isSlice, 
 		if name != "" && isRegisteredType(name) {
 			return name, name, name, false, false, false, true, name
 		}
-		// Check for structs that should be discovered
-		if name != "" && t.NumField() > 0 && shouldDiscover(t) {
-			return name, name, name, false, false, false, true, name
-		}
 		// Unknown struct - treat as opaque JSON
 		return "serde_json::Value", "Any", "unknown", false, false, false, false, ""
 	}
@@ -233,13 +224,6 @@ func isRegisteredType(name string) bool {
 	return registeredTypeNames[name]
 }
 
-// shouldDiscover checks if a struct type should be auto-discovered for generation.
-func shouldDiscover(t reflect.Type) bool {
-	return registeredTypeNames[t.Name()]
-}
-
-// Wrapper type for views.Slice to get the element type
-var viewsSlicePtrType = reflect.TypeOf((*views.Slice[string])(nil))
 
 // inspectStruct inspects a Go struct type and returns FieldInfo for each field.
 func inspectStruct(t reflect.Type, comments map[string]*StructComments) *StructInfo {
@@ -376,13 +360,111 @@ func parseJSONTag(tag, fieldName string) (name string, omit string) {
 	return name, omit
 }
 
-// hasEmbeddedStruct checks if a type has an embedded struct (like MaskedPrefs embeds Prefs).
-func hasEmbeddedStruct(t reflect.Type) (reflect.Type, bool) {
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		if f.Anonymous && f.Type.Kind() == reflect.Struct {
-			return f.Type, true
+// collectReachable performs a recursive walk from the given root types,
+// following pointers, slices, maps, View types, embedded structs, and
+// views.Slice[T] to find all struct types reachable from the roots.
+// Only types present in the candidates map are collected.
+func collectReachable(roots []reflect.Type, candidates map[string]reflect.Type) map[string]bool {
+	reachable := map[string]bool{}
+	visited := map[reflect.Type]bool{}
+
+	var walk func(t reflect.Type)
+	walk = func(t reflect.Type) {
+		if visited[t] {
+			return
+		}
+		visited[t] = true
+
+		// Terminal types don't need further recursion
+		if _, ok := knownTypeMap[t]; ok {
+			return
+		}
+
+		// Pointer: unwrap
+		if t.Kind() == reflect.Ptr {
+			walk(t.Elem())
+			return
+		}
+
+		// Slice: follow element (strip pointer like resolveType does)
+		if t.Kind() == reflect.Slice {
+			if t.Elem().Kind() == reflect.Uint8 {
+				return // []byte is terminal
+			}
+			elem := t.Elem()
+			if elem.Kind() == reflect.Ptr {
+				elem = elem.Elem()
+			}
+			walk(elem)
+			return
+		}
+
+		// Array: follow element
+		if t.Kind() == reflect.Array {
+			walk(t.Elem())
+			return
+		}
+
+		// Map: follow key and value (strip pointer on value like resolveType)
+		if t.Kind() == reflect.Map {
+			walk(t.Key())
+			val := t.Elem()
+			if val.Kind() == reflect.Ptr {
+				val = val.Elem()
+			}
+			walk(val)
+			return
+		}
+
+		// views.Slice[T]: get element via At method
+		if t.Kind() == reflect.Struct && strings.HasPrefix(t.Name(), "Slice[") {
+			atMethod, ok := t.MethodByName("At")
+			if ok && atMethod.Type.NumOut() == 1 {
+				walk(atMethod.Type.Out(0))
+			}
+			pt := reflect.PointerTo(t)
+			atMethod, ok = pt.MethodByName("At")
+			if ok && atMethod.Type.NumOut() == 1 {
+				walk(atMethod.Type.Out(0))
+			}
+			return
+		}
+
+		// View types (e.g. HostinfoView → Hostinfo)
+		if strings.HasSuffix(t.Name(), "View") && t.Kind() == reflect.Struct {
+			baseName := strings.TrimSuffix(t.Name(), "View")
+			if cand, ok := candidates[baseName]; ok {
+				walk(cand)
+			}
+			return
+		}
+
+		// Struct types: if it's a candidate, mark reachable and walk fields
+		if t.Kind() == reflect.Struct {
+			name := t.Name()
+			if name == "" {
+				return
+			}
+			if _, ok := candidates[name]; !ok {
+				return
+			}
+			reachable[name] = true
+			for i := 0; i < t.NumField(); i++ {
+				f := t.Field(i)
+				if !f.IsExported() {
+					continue
+				}
+				if f.Type.Name() == "Incomparable" {
+					continue
+				}
+				walk(f.Type)
+			}
+			return
 		}
 	}
-	return nil, false
+
+	for _, root := range roots {
+		walk(root)
+	}
+	return reachable
 }

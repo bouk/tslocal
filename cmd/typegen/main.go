@@ -29,14 +29,10 @@ func main() {
 	projectRoot := filepath.Join(exe, "..", "..")
 	tailscaleDir := filepath.Join(projectRoot, "tailscale")
 
-	// Source files to parse for comments
+	// Source files to parse for comments (only files containing reachable types)
 	sourceFiles := []string{
 		"ipn/ipnstate/ipnstate.go",
 		"tailcfg/tailcfg.go",
-		"tailcfg/derpmap.go",
-		"tailcfg/proto_port_range.go",
-		"ipn/prefs.go",
-		"ipn/backend.go",
 		"ipn/serve.go",
 		"client/tailscale/apitype/apitype.go",
 		"types/dnstype/dnstype.go",
@@ -105,7 +101,33 @@ func main() {
 		{"Resolver", reflect.TypeOf(dnstype.Resolver{})},
 	}
 
-	// Register all type names
+	// Build candidates map and pre-populate registeredTypeNames
+	// (needed for View type resolution during the reachability walk)
+	candidates := map[string]reflect.Type{}
+	for _, te := range types {
+		candidates[te.Name] = te.Type
+		registeredTypeNames[te.Name] = true
+	}
+
+	// Walk from root types to find all reachable structs
+	rootTypes := []reflect.Type{
+		reflect.TypeOf(ipnstate.Status{}),
+		reflect.TypeOf(apitype.WhoIsResponse{}),
+		reflect.TypeOf(ipn.ServeConfig{}),
+	}
+	reachable := collectReachable(rootTypes, candidates)
+
+	// Filter types to only reachable ones
+	var filteredTypes []typeEntry
+	for _, te := range types {
+		if reachable[te.Name] {
+			filteredTypes = append(filteredTypes, te)
+		}
+	}
+	types = filteredTypes
+
+	// Re-set registeredTypeNames to only reachable types
+	registeredTypeNames = map[string]bool{}
 	for _, te := range types {
 		registeredTypeNames[te.Name] = true
 	}

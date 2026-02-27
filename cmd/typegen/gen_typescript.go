@@ -299,27 +299,6 @@ export const CurrentTailnetSchema = z.object({
   MagicDNSEnabled: z.boolean(),
 });
 export type CurrentTailnet = z.infer<typeof CurrentTailnetSchema>;
-
-/** Profile status containing current and all profiles. */
-export const ProfileStatusSchema = z.object({
-  CurrentProfile: LoginProfileSchema,
-  AllProfiles: z.array(LoginProfileSchema),
-});
-export type ProfileStatus = z.infer<typeof ProfileStatusSchema>;
-
-/** Bitmask for IPN bus watch notifications. */
-export enum NotifyWatchOpt {
-  /** Receive initial state at start of watch. */
-  NotifyInitialState = 1 << 1,
-  /** Receive full network map updates. */
-  NotifyInitialNetMap = 1 << 2,
-  /** Receive partial state updates. */
-  NotifyInitialDriveShares = 1 << 3,
-  /** Receive full prefs in initial state. */
-  NotifyInitialPrefs = 1 << 4,
-  /** Receive outgoing file updates. */
-  NotifyInitialOutgoingFiles = 1 << 5,
-}
 `)
 
 	return b.String()
