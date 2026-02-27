@@ -33,7 +33,7 @@ pub struct Status {
     #[serde(default)]
     pub backend_state: String,
     /// HaveNodeKey is whether the current profile has a node key configured.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub have_node_key: bool,
     /// current URL provided by control to authorize client
@@ -122,7 +122,7 @@ pub struct PeerStatus {
     /// AltSharerUserID is the user who shared this node
     /// if it's different than UserID. Otherwise it's zero.
     #[serde(rename = "AltSharerUserID")]
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub alt_sharer_user_id: i64,
     /// TailscaleIPs are the IP addresses assigned to the node.
@@ -227,7 +227,7 @@ pub struct PeerStatus {
     /// it's owned by a shared-to user and that node might connect
     /// to us. These nodes should be hidden by "tailscale status"
     /// etc by default.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub sharee_node: bool,
     /// InNetworkMap means that this peer was seen in our latest network map.
@@ -245,7 +245,7 @@ pub struct PeerStatus {
     /// Expired means that this peer's node key has expired, based on either
     /// information from control or optimisically set on the client if the
     /// expiration time has passed.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub expired: bool,
     /// KeyExpiry, if present, is the time at which the node key expired or
@@ -347,7 +347,7 @@ pub struct Node {
     #[serde(default)]
     pub user: i64,
     /// Sharer, if non-zero, is the user who shared this node, if different than User.
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub sharer: i64,
     #[serde(default)]
@@ -401,7 +401,7 @@ pub struct Node {
     /// HomeDERP may be zero if not (yet) known, but ideally always be non-zero
     /// for magicsock connectivity to function normally.
     #[serde(rename = "HomeDERP")]
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub home_derp: i64,
     #[serde(default)]
@@ -410,7 +410,7 @@ pub struct Node {
     #[serde(default)]
     pub created: String,
     /// if non-zero, the node's capability version; old servers might not send
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub cap: i64,
     /// ```text
@@ -446,7 +446,7 @@ pub struct Node {
     #[serde(default)]
     pub online: Option<bool>,
     /// TODO(crawshaw): replace with MachineStatus
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub machine_authorized: bool,
     /// ```text
@@ -491,7 +491,7 @@ pub struct Node {
     /// MapResponse's PacketFilter to verify that its AllowedIPs will not be
     /// accepted by the packet filter.
     #[serde(rename = "UnsignedPeerAPIOnly")]
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub unsigned_peer_api_only: bool,
     /// MagicDNS base name (for normal non-shared-in nodes), FQDN (without trailing dot, for shared-in nodes), or Hostname (if no MagicDNS)
@@ -511,7 +511,7 @@ pub struct Node {
     /// this; clients are only allowed to set this from false to true. On
     /// the client, this is calculated client-side based on a timestamp sent
     /// from control, to avoid clock skew issues.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub expired: bool,
     /// SelfNodeV4MasqAddrForThisPeer is the IPv4 that this peer knows the current node as.
@@ -549,13 +549,13 @@ pub struct Node {
     /// IsWireGuardOnly indicates that this is a non-Tailscale WireGuard peer, it
     /// is not expected to speak Disco or DERP, and it must have Endpoints in
     /// order to be reachable.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub is_wire_guard_only: bool,
     /// IsJailed indicates that this node is jailed and should not be allowed
     /// initiate connections, however outbound connections to it should still be
     /// allowed.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub is_jailed: bool,
     /// ExitNodeDNSResolvers is the list of DNS servers that should be used when this
@@ -660,15 +660,15 @@ pub struct Hostinfo {
     #[serde(default)]
     pub hostname: String,
     /// indicates whether the host is blocking incoming connections
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub shields_up: bool,
     /// indicates this node exists in netmap because it's owned by a shared-to user
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub sharee_node: bool,
     /// indicates that the user has opted out of sending logs and support
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub no_logs_no_support: bool,
     /// WireIngress indicates that the node would like to be wired up server-side
@@ -678,15 +678,15 @@ pub struct Hostinfo {
     /// away, even if it's disabled most of the time. As an optimization, this is
     /// only sent if IngressEnabled is false, as IngressEnabled implies that this
     /// option is true.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub wire_ingress: bool,
     /// if the node has any funnel endpoint enabled
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub ingress_enabled: bool,
     /// indicates that the node has opted-in to admin-console-drive remote updates
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub allows_update: bool,
     /// the current host's machine type (uname -m)
@@ -810,7 +810,7 @@ pub struct NetInfo {
     pub working_i_c_m_pv4: Option<bool>,
     /// HavePortMap is whether we have an existing portmap open
     /// (UPnP, PMP, or PCP).
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub have_port_map: bool,
     /// UPnP is whether UPnP appears present on the LAN.
@@ -839,7 +839,7 @@ pub struct NetInfo {
     /// that the node subscribes to traffic at.
     /// Zero means disconnected or unknown.
     #[serde(rename = "PreferredDERP")]
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub preferred_derp: i64,
     /// LinkType is the current link type, if known.
@@ -934,10 +934,10 @@ pub struct Location {
     pub city_code: String,
     /// Latitude, Longitude are optional geographical coordinates of the node, in degrees.
     /// No particular accuracy level is promised; the coordinates may simply be the center of the city or country.
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub latitude: f64,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub longitude: f64,
     /// Priority determines the order of use of an exit node when a
@@ -947,7 +947,7 @@ pub struct Location {
     /// 
     /// A value of 0 means the exit node does not have a priority
     /// preference. A negative int is not allowed.
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub priority: i64,
 }
@@ -972,19 +972,19 @@ pub struct TPMInfo {
     pub vendor: String,
     /// Model is a vendor-defined TPM model.
     /// Read from TPM_PT_VENDOR_TPM_TYPE.
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub model: i64,
     /// FirmwareVersion is the version number of the firmware.
     /// Read from TPM_PT_FIRMWARE_VERSION_*.
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub firmware_version: u64,
     /// SpecRevision is the TPM 2.0 spec revision encoded as a single number. All
     /// revisions can be found at
     /// https://trustedcomputinggroup.org/resource/tpm-library-specification/.
     /// Before revision 184, TCG used the "01.83" format for revision 183.
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub spec_revision: i64,
     /// FamilyIndicator is the TPM spec family, like "2.0".
@@ -1002,7 +1002,7 @@ pub struct TPMInfo {
 #[serde(rename_all = "PascalCase")]
 pub struct ClientVersion {
     /// RunningLatest is true if the client is running the latest build.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub running_latest: bool,
     /// LatestVersion is the latest version.Short ("1.34.2") version available
@@ -1014,14 +1014,14 @@ pub struct ClientVersion {
     /// UrgentSecurityUpdate is set when the client is missing an important
     /// security update. That update may be in LatestVersion or earlier.
     /// UrgentSecurityUpdate should not be set if RunningLatest is false.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub urgent_security_update: bool,
     /// Notify is whether the client should do an OS-specific notification about
     /// a new version being available. This should not be populated if
     /// RunningLatest is true. The client should not notify multiple times for
     /// the same LatestVersion value.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub notify: bool,
     /// NotifyURL is a URL to open in the browser when the user clicks on the
@@ -1089,7 +1089,7 @@ pub struct TCPPortHandler {
     /// 
     /// It is mutually exclusive with TCPForward.
     #[serde(rename = "HTTPS")]
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub https: bool,
     /// HTTP, if true, means that tailscaled should handle this connection as an
@@ -1097,7 +1097,7 @@ pub struct TCPPortHandler {
     /// 
     /// It is mutually exclusive with TCPForward.
     #[serde(rename = "HTTP")]
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub http: bool,
     /// TCPForward is the IP:port to forward TCP connections to.
@@ -1121,7 +1121,7 @@ pub struct TCPPortHandler {
     /// before forwarding the connection to TCPForward.
     /// 
     /// This is only valid if TCPForward is non-empty.
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub proxy_protocol: i64,
 }
@@ -1186,7 +1186,7 @@ pub struct ServiceConfig {
     #[serde(default, deserialize_with = "deserialize_null_default")]
     pub web: HashMap<String, WebServerConfig>,
     /// Tun determines if the service should be using L3 forwarding (Tun mode).
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub tun: bool,
 }
@@ -1241,15 +1241,11 @@ pub struct Resolver {
     /// exit node is in use. Normally, DNS resolution is delegated to the exit node but
     /// there are situations where it is preferable to still use a Split DNS server and/or
     /// global DNS server instead of the exit node.
-    #[serde(skip_serializing_if = "is_false")]
+    #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub use_with_exit_node: bool,
 }
 
-fn is_false(v: &bool) -> bool {
-    !v
-}
-
-fn is_zero<T: Default + PartialEq>(v: &T) -> bool {
+fn is_default<T: Default + PartialEq>(v: &T) -> bool {
     *v == T::default()
 }

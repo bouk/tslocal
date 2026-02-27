@@ -91,10 +91,8 @@ func generateRust(structs []*StructInfo) string {
 					b.WriteString("    #[serde(skip_serializing_if = \"Option::is_none\")]\n")
 				} else if rustType == "String" {
 					b.WriteString("    #[serde(skip_serializing_if = \"String::is_empty\")]\n")
-				} else if rustType == "bool" {
-					b.WriteString("    #[serde(skip_serializing_if = \"is_false\")]\n")
-				} else if isIntType(rustType) || rustType == "f64" {
-					b.WriteString("    #[serde(skip_serializing_if = \"is_zero\")]\n")
+				} else if isIntType(rustType) || rustType == "f64" || rustType == "bool" {
+					b.WriteString("    #[serde(skip_serializing_if = \"is_default\")]\n")
 				}
 			}
 
@@ -121,9 +119,8 @@ func generateRust(structs []*StructInfo) string {
 		b.WriteString("}\n")
 	}
 
-	// Add helper functions for skip_serializing_if
-	b.WriteString("\nfn is_false(v: &bool) -> bool {\n    !v\n}\n")
-	b.WriteString("\nfn is_zero<T: Default + PartialEq>(v: &T) -> bool {\n    *v == T::default()\n}\n")
+	// Add helper function for skip_serializing_if
+	b.WriteString("\nfn is_default<T: Default + PartialEq>(v: &T) -> bool {\n    *v == T::default()\n}\n")
 
 	return b.String()
 }
