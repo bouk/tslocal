@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 import msgspec
 
-from tslocalapi._errors import (
+from tslocal._errors import (
     AccessDeniedError,
     ConnectionError,
     DaemonNotRunningError,
@@ -16,8 +16,8 @@ from tslocalapi._errors import (
     PreconditionsFailedError,
     error_message_from_body,
 )
-from tslocalapi._transport import Transport
-from tslocalapi._types import (
+from tslocal._transport import Transport
+from tslocal._types import (
     ServeConfig,
     Status,
     WhoIsResponse,

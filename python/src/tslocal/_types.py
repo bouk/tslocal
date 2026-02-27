@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import msgspec
 
-from tslocalapi._generated_types import (  # noqa: F401
+from tslocal._generated_types import (  # noqa: F401
     Status,
     PeerStatus,
     TailnetStatus,

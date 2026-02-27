@@ -10,15 +10,15 @@ from typing import Any
 
 import pytest
 
-from tslocalapi._client import LocalClient
-from tslocalapi._errors import (
+from tslocal._client import LocalClient
+from tslocal._errors import (
     AccessDeniedError,
     HttpError,
     PeerNotFoundError,
     PreconditionsFailedError,
 )
-from tslocalapi._safesocket import PortAndToken
-import tslocalapi._transport as transport_mod
+from tslocal._safesocket import PortAndToken
+import tslocal._transport as transport_mod
 
 
 class MockHandler(http.server.BaseHTTPRequestHandler):

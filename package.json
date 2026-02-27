@@ -1,5 +1,5 @@
 {
-  "name": "tslocalapi",
+  "name": "tslocal",
   "version": "0.0.10",
   "description": "Client library for the Tailscale Local API",
   "type": "module",
@@ -29,9 +29,9 @@
   "author": "Bouke van der Bijl",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bouk/tslocalapi.git"
+    "url": "git+https://github.com/bouk/tslocal.git"
   },
-  "homepage": "https://github.com/bouk/tslocalapi",
+  "homepage": "https://github.com/bouk/tslocal",
   "keywords": [
     "tailscale",
     "local-api",

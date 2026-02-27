@@ -157,7 +157,7 @@ func main() {
 
 	// Generate Python
 	pythonCode := generatePython(structInfos)
-	pythonPath := filepath.Join(projectRoot, "python", "src", "tslocalapi", "_generated_types.py")
+	pythonPath := filepath.Join(projectRoot, "python", "src", "tslocal", "_generated_types.py")
 	if err := os.WriteFile(pythonPath, []byte(pythonCode), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "error writing %s: %v\n", pythonPath, err)
 		os.Exit(1)

@@ -1,6 +1,6 @@
 """Tests for error types."""
 
-from tslocalapi._errors import (
+from tslocal._errors import (
     AccessDeniedError,
     ConnectionError,
     DaemonNotRunningError,

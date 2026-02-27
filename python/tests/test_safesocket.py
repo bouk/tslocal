@@ -4,7 +4,7 @@ import os
 import platform
 from pathlib import Path
 
-from tslocalapi._safesocket import (
+from tslocal._safesocket import (
     CURRENT_CAP_VERSION,
     LOCAL_API_HOST,
     default_socket_path,
@@ -53,7 +53,7 @@ def test_parse_lsof_output_empty() -> None:
 
 
 def test_read_macsys_same_user_proof_from_dir(tmp_path: Path) -> None:
-    from tslocalapi._safesocket import _read_macsys_same_user_proof
+    from tslocal._safesocket import _read_macsys_same_user_proof
 
     # Create symlink for port
     port_link = tmp_path / "ipnport"
@@ -70,7 +70,7 @@ def test_read_macsys_same_user_proof_from_dir(tmp_path: Path) -> None:
 
 
 def test_read_macsys_same_user_proof_missing(tmp_path: Path) -> None:
-    from tslocalapi._safesocket import _read_macsys_same_user_proof
+    from tslocal._safesocket import _read_macsys_same_user_proof
 
     result = _read_macsys_same_user_proof(str(tmp_path))
     assert result is None

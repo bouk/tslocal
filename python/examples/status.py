@@ -5,7 +5,7 @@ import sys
 
 import msgspec
 
-from tslocalapi import LocalClient
+from tslocal import LocalClient
 
 with LocalClient() as client:
     status = client.status()

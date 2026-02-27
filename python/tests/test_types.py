@@ -2,7 +2,7 @@
 
 import msgspec
 
-from tslocalapi._types import (
+from tslocal._types import (
     CurrentTailnet,
     PeerStatus,
     Status,

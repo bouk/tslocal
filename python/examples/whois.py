@@ -5,7 +5,7 @@ import sys
 
 import msgspec
 
-from tslocalapi import LocalClient
+from tslocal import LocalClient
 
 if len(sys.argv) < 2:
     print(f"usage: {sys.argv[0]} <addr>", file=sys.stderr)

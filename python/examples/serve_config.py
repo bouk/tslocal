@@ -4,7 +4,7 @@ import sys
 
 import msgspec
 
-from tslocalapi import LocalClient
+from tslocal import LocalClient
 
 with LocalClient() as client:
     config = client.get_serve_config()

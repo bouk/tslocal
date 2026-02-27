@@ -10,7 +10,7 @@ import socket
 from base64 import b64encode
 from typing import Any
 
-from tslocalapi._safesocket import (
+from tslocal._safesocket import (
     CURRENT_CAP_VERSION,
     LOCAL_API_HOST,
     PortAndToken,

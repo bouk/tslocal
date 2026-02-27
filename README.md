@@ -1,4 +1,4 @@
-# tslocalapi
+# tslocal
 
 Client libraries for the [Tailscale Local API](https://tailscale.com/kb/1242/tailscale-api-local) in Rust, Python, and TypeScript.
 
@@ -17,17 +17,17 @@ These are direct ports of the official Go client (`tailscale/client/local`), tar
 **Rust** — add to `Cargo.toml`:
 ```toml
 [dependencies]
-tslocalapi = "0.0.10"
+tslocal = "0.0.10"
 ```
 
 **Python**:
 ```sh
-pip install tslocalapi
+pip install tslocal
 ```
 
 **TypeScript**:
 ```sh
-npm install tslocalapi
+npm install tslocal
 ```
 
 ## Usage
@@ -37,7 +37,7 @@ All three libraries communicate with the local Tailscale daemon over a Unix doma
 ### Rust
 
 ```rust
-use tslocalapi::LocalClient;
+use tslocal::LocalClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Python
 
 ```python
-from tslocalapi import LocalClient
+from tslocal import LocalClient
 
 with LocalClient() as client:
     status = client.status()
@@ -61,7 +61,7 @@ with LocalClient() as client:
 ### TypeScript
 
 ```typescript
-import { LocalClient } from "tslocalapi";
+import { LocalClient } from "tslocal";
 
 const client = new LocalClient();
 const status = await client.status();

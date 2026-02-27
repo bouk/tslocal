@@ -1,4 +1,4 @@
-module github.com/bouk/tslocalapi/cmd/typegen
+module github.com/bouk/tslocal/cmd/typegen
 
 go 1.25.5
 

@@ -1,7 +1,7 @@
 """Client library for the Tailscale Local API."""
 
-from tslocalapi._client import LocalClient
-from tslocalapi._errors import (
+from tslocal._client import LocalClient
+from tslocal._errors import (
     TailscaleError,
     AccessDeniedError,
     PreconditionsFailedError,
@@ -10,7 +10,7 @@ from tslocalapi._errors import (
     DaemonNotRunningError,
     HttpError,
 )
-from tslocalapi._types import (
+from tslocal._types import (
     Status,
     PeerStatus,
     UserProfile,
