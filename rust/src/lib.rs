@@ -1,5 +1,4 @@
 #![deny(missing_docs)]
-#![deny(clippy::unwrap_used, clippy::expect_used)]
 #![deny(clippy::all)]
 
 //! Client library for the Tailscale Local API.

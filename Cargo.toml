@@ -42,3 +42,12 @@ libc = "0.2"
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }
 tempfile = "3"
+
+[lints.clippy]
+correctness = "deny"
+suspicious = "deny"
+style = "deny"
+complexity = "deny"
+perf = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
