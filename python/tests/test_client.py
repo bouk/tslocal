@@ -145,8 +145,8 @@ def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     status = client.status()
     assert status.version == "1.94.1"
     assert status.backend_state == "Running"
-    assert status.self_node is not None
-    assert status.self_node.host_name == "myhost"
+    assert status.self_ is not None
+    assert status.self_.host_name == "myhost"
     client.close()
 
 

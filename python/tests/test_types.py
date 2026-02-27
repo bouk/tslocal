@@ -55,9 +55,9 @@ def test_status_from_dict() -> None:
     assert status.version == "1.94.1"
     assert status.backend_state == "Running"
     assert status.tun is True
-    assert status.self_node is not None
-    assert status.self_node.host_name == "myhost"
-    assert status.self_node.tailscale_ips == ["100.64.0.1"]
+    assert status.self_ is not None
+    assert status.self_.host_name == "myhost"
+    assert status.self_.tailscale_ips == ["100.64.0.1"]
     assert "key456" in status.peer
     assert status.peer["key456"].host_name == "otherhost"
     assert status.current_tailnet is not None

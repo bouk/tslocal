@@ -25,7 +25,7 @@ class Status(msgspec.Struct, rename="pascal", omit_defaults=True):
     auth_url: str = msgspec.field(default="", name="AuthURL")
     # Tailscale IP(s) assigned to this node
     tailscale_ips: list[str] | None = msgspec.field(default=None, name="TailscaleIPs")
-    self_node: PeerStatus | None = msgspec.field(default=None, name="Self")
+    self_: PeerStatus | None = None
     # ExitNodeStatus describes the current exit node.
     # If nil, an exit node is not in use.
     exit_node_status: ExitNodeStatus | None = None

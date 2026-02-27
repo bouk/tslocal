@@ -7,7 +7,7 @@ import (
 
 // pythonKeywords maps Python keywords/builtins to safe alternatives.
 var pythonKeywords = map[string]string{
-	"self":   "self_node",
+	"self":   "self_",
 	"type":   "type_",
 	"class":  "class_",
 	"import": "import_",
