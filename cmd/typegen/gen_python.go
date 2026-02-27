@@ -113,19 +113,13 @@ func pythonDefault(fi FieldInfo) string {
 	if fi.IsOptional {
 		return "None"
 	}
-	// Non-optional slices/maps without omit can receive null from Go
-	// (nil slices/maps serialize as null). Default to None for these.
-	// With omit, the field is absent when nil, so default to []/{}.
+	// Slices/maps always default to empty collections. Go nil slices/maps
+	// serialize as JSON null, but the Python decoder preprocesses these
+	// to empty collections before struct conversion.
 	if fi.IsSlice {
-		if fi.Omit == "" {
-			return "None"
-		}
 		return "[]"
 	}
 	if fi.IsMap {
-		if fi.Omit == "" {
-			return "None"
-		}
 		return "{}"
 	}
 
@@ -156,17 +150,11 @@ func pythonMsgspecFieldDefault(fi FieldInfo) string {
 	if fi.IsOptional || fi.IsNestedStruct {
 		return "default=None"
 	}
-	// Non-optional slices/maps without omit can receive null from Go.
+	// Slices/maps always default to empty collections.
 	if fi.IsSlice {
-		if fi.Omit == "" {
-			return "default=None"
-		}
 		return "default_factory=list"
 	}
 	if fi.IsMap {
-		if fi.Omit == "" {
-			return "default=None"
-		}
 		return "default_factory=dict"
 	}
 
@@ -204,12 +192,6 @@ func pythonTypeAnnotation(fi FieldInfo) string {
 	// Exception: non-null override fields are guaranteed present.
 	if fi.IsNestedStruct && !fi.IsOptional && !fi.IsNonNull {
 		return fi.PythonType + " | None"
-	}
-
-	// Non-optional slices/maps without omit can receive null from Go
-	// (nil Go slices/maps serialize as JSON null). These default to None.
-	if (fi.IsSlice || fi.IsMap) && !fi.IsOptional && fi.Omit == "" {
-		return pyType + " | None"
 	}
 
 	return pyType

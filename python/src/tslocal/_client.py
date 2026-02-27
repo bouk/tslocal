@@ -7,6 +7,7 @@ from urllib.parse import quote
 
 import msgspec
 
+from tslocal._decode import decode_json
 from tslocal._errors import (
     AccessDeniedError,
     ConnectionError,
@@ -89,12 +90,12 @@ class Client:
     def status(self) -> Status:
         """Get the current tailscaled status."""
         data = self._get200("/localapi/v0/status")
-        return msgspec.json.decode(data, type=Status)
+        return decode_json(data, Status)
 
     def status_without_peers(self) -> Status:
         """Get the current tailscaled status without peer information."""
         data = self._get200("/localapi/v0/status?peers=false")
-        return msgspec.json.decode(data, type=Status)
+        return decode_json(data, Status)
 
     # --- WhoIs ---
 
@@ -110,7 +111,7 @@ class Client:
             if status == 403:
                 raise AccessDeniedError(msg)
             raise HttpError(status, msg)
-        return msgspec.json.decode(body, type=WhoIsResponse)
+        return decode_json(body, WhoIsResponse)
 
     def who_is_node_key(self, node_key: str) -> WhoIsResponse:
         """Look up a peer by node key."""
@@ -132,7 +133,7 @@ class Client:
             if status == 403:
                 raise AccessDeniedError(msg)
             raise HttpError(status, msg)
-        return msgspec.json.decode(body, type=WhoIsResponse)
+        return decode_json(body, WhoIsResponse)
 
     # --- Certificates ---
 
@@ -168,7 +169,7 @@ class Client:
         if status != 200:
             msg = error_message_from_body(body) or body.decode()
             raise HttpError(status, msg)
-        config = msgspec.json.decode(body, type=ServeConfig)
+        config = decode_json(body, ServeConfig)
         config.e_tag = resp_headers.get("Etag", resp_headers.get("etag", ""))
         return config
 

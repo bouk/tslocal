@@ -2,6 +2,7 @@
 
 import msgspec
 
+from tslocal._decode import decode_json
 from tslocal._types import (
     CurrentTailnet,
     PeerStatus,
@@ -88,3 +89,74 @@ def test_whois_response_from_dict() -> None:
     resp = msgspec.convert(data, WhoIsResponse)
     assert resp.node.name == "myhost"
     assert resp.user_profile.login_name == "user@example.com"
+
+
+def test_null_collections_become_empty() -> None:
+    """Go nil slices/maps serialize as JSON null; decode_json should convert them to empty collections."""
+    data = msgspec.json.encode(
+        {
+            "Version": "1.94.1",
+            "TUN": True,
+            "BackendState": "Running",
+            "TailscaleIPs": None,
+            "Health": None,
+            "CertDomains": None,
+            "Peer": None,
+            "User": None,
+            "Self": {
+                "ID": "n1",
+                "PublicKey": "key1",
+                "TailscaleIPs": None,
+                "AllowedIPs": None,
+                "Tags": None,
+                "PrimaryRoutes": None,
+                "Addrs": None,
+                "PeerAPIURL": None,
+            },
+        }
+    )
+    status = decode_json(data, Status)
+    # Top-level collections
+    assert status.tailscale_ips == []
+    assert status.health == []
+    assert status.cert_domains == []
+    assert status.peer == {}
+    assert status.user == {}
+    # Nested struct collections
+    assert status.self_.tailscale_ips == []
+    assert status.self_.allowed_ips == []
+    assert status.self_.tags == []
+    assert status.self_.primary_routes == []
+    assert status.self_.addrs == []
+    assert status.self_.peer_api_url == []
+
+
+def test_null_collections_in_dict_values() -> None:
+    """Collections inside dict-of-struct values should also be converted."""
+    data = msgspec.json.encode(
+        {
+            "Version": "1.94.1",
+            "BackendState": "Running",
+            "Peer": {
+                "key1": {
+                    "ID": "n1",
+                    "PublicKey": "key1",
+                    "TailscaleIPs": None,
+                    "Tags": None,
+                }
+            },
+        }
+    )
+    status = decode_json(data, Status)
+    peer = status.peer["key1"]
+    assert peer.tailscale_ips == []
+    assert peer.tags == []
+
+
+def test_missing_collections_are_empty() -> None:
+    """Absent collection fields (omitempty) should default to empty."""
+    data = msgspec.json.encode({"Version": "1.94.1", "BackendState": "Running"})
+    status = decode_json(data, Status)
+    assert status.peer == {}
+    assert status.user == {}
+    assert status.health == []

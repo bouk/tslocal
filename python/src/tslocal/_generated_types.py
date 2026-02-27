@@ -24,7 +24,7 @@ class Status(msgspec.Struct, rename="pascal", omit_defaults=True):
     # current URL provided by control to authorize client
     auth_url: str = msgspec.field(default="", name="AuthURL")
     # Tailscale IP(s) assigned to this node
-    tailscale_ips: list[str] | None = msgspec.field(default=None, name="TailscaleIPs")
+    tailscale_ips: list[str] = msgspec.field(default_factory=list, name="TailscaleIPs")
     self_: PeerStatus = msgspec.field(default_factory=lambda: PeerStatus())
     # ExitNodeStatus describes the current exit node.
     # If nil, an exit node is not in use.
@@ -32,7 +32,7 @@ class Status(msgspec.Struct, rename="pascal", omit_defaults=True):
     # Health contains health check problems.
     # Empty means everything is good. (or at least that no known
     # problems are detected)
-    health: list[str] | None = None
+    health: list[str] = []
     # This field is the legacy name of CurrentTailnet.MagicDNSSuffix.
     # 
     # Deprecated: use CurrentTailnet.MagicDNSSuffix instead.
@@ -45,12 +45,12 @@ class Status(msgspec.Struct, rename="pascal", omit_defaults=True):
     # certificates. See SetDNSRequest for dns-01 ACME challenges
     # for e.g. LetsEncrypt. These names are FQDNs without
     # trailing periods, and without any "_acme-challenge." prefix.
-    cert_domains: list[str] | None = None
+    cert_domains: list[str] = []
     # Peer is the state of each peer, keyed by each peer's current public key.
-    peer: dict[str, PeerStatus] | None = None
+    peer: dict[str, PeerStatus] = {}
     # User contains profile information about UserIDs referenced by
     # PeerStatus.UserID, PeerStatus.AltSharerUserID, etc.
-    user: dict[str, UserProfile] | None = None
+    user: dict[str, UserProfile] = {}
     # ClientVersion, when non-nil, contains information about the latest
     # version of the Tailscale client that's available. Depending on
     # the platform and client settings, it may not be available.
@@ -74,7 +74,7 @@ class PeerStatus(msgspec.Struct, rename="pascal", omit_defaults=True):
     # if it's different than UserID. Otherwise it's zero.
     alt_sharer_user_id: int = msgspec.field(default=0, name="AltSharerUserID")
     # TailscaleIPs are the IP addresses assigned to the node.
-    tailscale_ips: list[str] | None = msgspec.field(default=None, name="TailscaleIPs")
+    tailscale_ips: list[str] = msgspec.field(default_factory=list, name="TailscaleIPs")
     # AllowedIPs are IP addresses allowed to route to this node.
     allowed_ips: list[str] | None = msgspec.field(default=None, name="AllowedIPs")
     # Tags are the list of ACL tags applied to this node.
@@ -85,7 +85,7 @@ class PeerStatus(msgspec.Struct, rename="pascal", omit_defaults=True):
     # not include the IPs in TailscaleIPs.
     primary_routes: list[str] | None = None
     # Endpoints:
-    addrs: list[str] | None = None
+    addrs: list[str] = []
     # one of Addrs, or unique if roaming
     cur_addr: str = ""
     # DERP region
@@ -115,7 +115,7 @@ class PeerStatus(msgspec.Struct, rename="pascal", omit_defaults=True):
     # change.
     active: bool = False
     # PeerAPIURL are the URLs of the node's PeerAPI servers.
-    peer_api_url: list[str] | None = msgspec.field(default=None, name="PeerAPIURL")
+    peer_api_url: list[str] = msgspec.field(default_factory=list, name="PeerAPIURL")
     # TaildropTargetStatus represents the node's eligibility to have files shared to it.
     taildrop_target: int = 0
     # Reason why this peer cannot receive files. Empty if CanReceiveFiles=true
@@ -184,7 +184,7 @@ class ExitNodeStatus(msgspec.Struct, rename="pascal"):
     # Online is whether the exit node is alive.
     online: bool = False
     # TailscaleIPs are the exit node's IP addresses assigned to the node.
-    tailscale_ips: list[str] | None = msgspec.field(default=None, name="TailscaleIPs")
+    tailscale_ips: list[str] = msgspec.field(default_factory=list, name="TailscaleIPs")
 
 
 class UserProfile(msgspec.Struct, rename="pascal", omit_defaults=True):
@@ -221,7 +221,7 @@ class Node(msgspec.Struct, rename="pascal", omit_defaults=True):
     machine: str = ""
     disco_key: str = ""
     # Addresses are the IP addresses of this Node directly.
-    addresses: list[str] | None = None
+    addresses: list[str] = []
     # AllowedIPs are the IP ranges to route to this node.
     # 
     # As of CapabilityVersion 112, this may be nil (null or undefined) on the wire
@@ -695,7 +695,7 @@ class WebServerConfig(msgspec.Struct, rename="pascal"):
     "WebServerConfig describes a web server's configuration."
 
     # mountPoint => handler
-    handlers: dict[str, HTTPHandler] | None = None
+    handlers: dict[str, HTTPHandler] = {}
 
 
 class HTTPHandler(msgspec.Struct, rename="pascal", omit_defaults=True):
@@ -739,7 +739,7 @@ class WhoIsResponse(msgspec.Struct, rename="pascal"):
     user_profile: UserProfile = msgspec.field(default_factory=lambda: UserProfile())
     # CapMap is a map of capabilities to their values.
     # See tailcfg.PeerCapMap and tailcfg.PeerCapability for details.
-    cap_map: dict[str, list[Any] | None] | None = None
+    cap_map: dict[str, list[Any] | None] = {}
 
 
 class Resolver(msgspec.Struct, rename="pascal", omit_defaults=True):
