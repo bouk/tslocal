@@ -14,8 +14,9 @@ use hyper_util::rt::TokioExecutor;
 /// Connections are pooled and reused via hyper's connection management.
 /// TCP port and auth token are discovered per-request (matching Go's behavior),
 /// so the client adapts to daemon restarts and late starts.
+#[derive(Clone, Debug)]
 pub struct Client {
-    config: TransportConfig,
+    use_socket_only: bool,
     client: HyperClient<TailscaleConnector, Full<Bytes>>,
 }
 
@@ -30,11 +31,12 @@ impl Client {
 
     /// Create a new client with explicit transport configuration.
     pub fn with_config(config: TransportConfig) -> Self {
-        let connector = TailscaleConnector::new(&config);
+        let use_socket_only = config.use_socket_only;
+        let connector = TailscaleConnector::new(config);
         let client = HyperClient::builder(TokioExecutor::new())
             .pool_idle_timeout(std::time::Duration::from_secs(60))
             .build(connector);
-        Self { config, client }
+        Self { use_socket_only, client }
     }
 
     /// Send an HTTP request to the local API and return the response.
@@ -45,7 +47,7 @@ impl Client {
         &self,
         req: Request<Full<Bytes>>,
     ) -> Result<Response<Incoming>, Error> {
-        let req = if let Some((_, ref token)) = resolve_port_and_token(self.config.use_socket_only).await {
+        let req = if let Some((_, ref token)) = resolve_port_and_token(self.use_socket_only).await {
             let (mut parts, body) = req.into_parts();
             parts.headers.insert(
                 hyper::header::AUTHORIZATION,

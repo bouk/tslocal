@@ -1,6 +1,7 @@
 use crate::safesocket;
 use hyper_util::client::legacy::connect::Connected;
 use hyper_util::rt::TokioIo;
+use std::borrow::Cow;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -8,23 +9,14 @@ use std::task::{Context, Poll};
 /// Configuration for connecting to tailscaled.
 ///
 /// Matches Go's `local.Client` fields: `Socket` and `UseSocketOnly`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TransportConfig {
     /// Socket path (Unix) or pipe path (Windows).
-    /// If empty, a platform-specific default is used.
-    pub socket_path: String,
+    /// If `None`, a platform-specific default is used.
+    pub socket_path: Option<String>,
     /// If true, only connect via the Unix socket and skip TCP fallback
     /// mechanisms used on macOS when connecting to the GUI client.
     pub use_socket_only: bool,
-}
-
-impl Default for TransportConfig {
-    fn default() -> Self {
-        Self {
-            socket_path: safesocket::default_socket_path().to_string(),
-            use_socket_only: false,
-        }
-    }
 }
 
 /// Discover the current TCP port and token.
@@ -141,14 +133,18 @@ impl hyper_util::client::legacy::connect::Connection for TailscaleStream {
 /// connect via TCP (macOS) or Unix socket, matching Go's `defaultDialer`.
 #[derive(Clone)]
 pub(crate) struct TailscaleConnector {
-    socket_path: String,
+    socket_path: Cow<'static, str>,
     use_socket_only: bool,
 }
 
 impl TailscaleConnector {
-    pub fn new(config: &TransportConfig) -> Self {
+    pub fn new(config: TransportConfig) -> Self {
+        let socket_path = match config.socket_path {
+            Some(path) => Cow::Owned(path),
+            None => Cow::Borrowed(safesocket::default_socket_path()),
+        };
         Self {
-            socket_path: config.socket_path.clone(),
+            socket_path,
             use_socket_only: config.use_socket_only,
         }
     }
@@ -171,7 +167,7 @@ impl tower_service::Service<hyper::Uri> for TailscaleConnector {
                 let stream = tokio::net::TcpStream::connect(("127.0.0.1", port)).await?;
                 Ok(TailscaleStream::Tcp(TokioIo::new(stream)))
             } else {
-                let stream = tokio::net::UnixStream::connect(&socket_path).await?;
+                let stream = tokio::net::UnixStream::connect(&*socket_path).await?;
                 Ok(TailscaleStream::Unix(TokioIo::new(stream)))
             }
         })
