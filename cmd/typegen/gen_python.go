@@ -87,7 +87,15 @@ func generatePython(structs []*StructInfo) string {
 			expectedPascal := snakeToPascal(pyName)
 			needsName := expectedPascal != fi.JSONName
 
-			if needsName {
+			if fi.IsNonNull && fi.IsNestedStruct {
+				// Non-null pointer override: use default_factory with lambda for forward-reference safety.
+				factory := fmt.Sprintf("default_factory=lambda: %s()", fi.PythonType)
+				if needsName {
+					b.WriteString(fmt.Sprintf("    %s: %s = msgspec.field(%s, name=%q)\n", pyName, pyType, factory, fi.JSONName))
+				} else {
+					b.WriteString(fmt.Sprintf("    %s: %s = msgspec.field(%s)\n", pyName, pyType, factory))
+				}
+			} else if needsName {
 				defaultVal := pythonMsgspecFieldDefault(fi)
 				b.WriteString(fmt.Sprintf("    %s: %s = msgspec.field(%s, name=%q)\n", pyName, pyType, defaultVal, fi.JSONName))
 			} else {
@@ -193,7 +201,8 @@ func pythonTypeAnnotation(fi FieldInfo) string {
 	}
 
 	// Non-optional nested structs default to None, so need | None type.
-	if fi.IsNestedStruct && !fi.IsOptional {
+	// Exception: non-null override fields are guaranteed present.
+	if fi.IsNestedStruct && !fi.IsOptional && !fi.IsNonNull {
 		return fi.PythonType + " | None"
 	}
 

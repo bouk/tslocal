@@ -44,9 +44,8 @@ pub struct Status {
     #[serde(rename = "TailscaleIPs")]
     #[serde(default, deserialize_with = "deserialize_null_default")]
     pub tailscale_ips: Vec<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub self_: Option<PeerStatus>,
+    pub self_: PeerStatus,
     /// ExitNodeStatus describes the current exit node.
     /// If nil, an exit node is not in use.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1196,12 +1195,10 @@ pub struct ServiceConfig {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WhoIsResponse {
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
-    pub node: Option<Node>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    pub node: Node,
     #[serde(default)]
-    pub user_profile: Option<UserProfile>,
+    pub user_profile: UserProfile,
     /// CapMap is a map of capabilities to their values.
     /// See tailcfg.PeerCapMap and tailcfg.PeerCapability for details.
     #[serde(default, deserialize_with = "deserialize_null_default")]

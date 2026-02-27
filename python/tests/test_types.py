@@ -55,7 +55,6 @@ def test_status_from_dict() -> None:
     assert status.version == "1.94.1"
     assert status.backend_state == "Running"
     assert status.tun is True
-    assert status.self_ is not None
     assert status.self_.host_name == "myhost"
     assert status.self_.tailscale_ips == ["100.64.0.1"]
     assert "key456" in status.peer
@@ -87,7 +86,5 @@ def test_whois_response_from_dict() -> None:
         },
     }
     resp = msgspec.convert(data, WhoIsResponse)
-    assert resp.node is not None
     assert resp.node.name == "myhost"
-    assert resp.user_profile is not None
     assert resp.user_profile.login_name == "user@example.com"

@@ -116,7 +116,7 @@ describe("Client", () => {
     const status = await client.status();
     expect(status.Version).toBe("1.94.1");
     expect(status.BackendState).toBe("Running");
-    expect(status.Self?.HostName).toBe("myhost");
+    expect(status.Self.HostName).toBe("myhost");
     client.destroy();
   });
 
@@ -263,7 +263,7 @@ describe("Client", () => {
 
     const client = makeClient();
     const result = await client.whoIsProto("tcp", "100.64.0.1:80");
-    expect(result.UserProfile?.LoginName).toBe("user@example.com");
+    expect(result.UserProfile.LoginName).toBe("user@example.com");
     client.destroy();
   });
 

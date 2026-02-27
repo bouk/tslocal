@@ -39,6 +39,10 @@ type FieldInfo struct {
 	IsNestedStruct bool
 	NestedTypeName string
 
+	// Whether this is a pointer field overridden to be non-null
+	// (guaranteed non-null in successful API responses)
+	IsNonNull bool
+
 	// Whether this is a flattened/embedded struct
 	IsEmbedded bool
 
@@ -224,6 +228,14 @@ func isRegisteredType(name string) bool {
 	return registeredTypeNames[name]
 }
 
+// nonNullPointers lists pointer fields that are guaranteed non-null in
+// successful API responses. These are treated as required (non-optional)
+// in generated types instead of the default pointer → optional mapping.
+var nonNullPointers = map[string]bool{
+	"WhoIsResponse.Node":        true, // Go doc: "never nil" in successful responses
+	"WhoIsResponse.UserProfile": true, // Go doc: "never nil" in successful responses
+	"Status.Self":               true, // Always populated via MutateSelfStatus in handler
+}
 
 // inspectStruct inspects a Go struct type and returns FieldInfo for each field.
 func inspectStruct(t reflect.Type, comments map[string]*StructComments) *StructInfo {
@@ -284,6 +296,17 @@ func inspectStruct(t reflect.Type, comments map[string]*StructComments) *StructI
 
 		// Resolve types
 		fi.RustType, fi.PythonType, fi.TypeScriptType, fi.IsOptional, fi.IsSlice, fi.IsMap, fi.IsNestedStruct, fi.NestedTypeName = resolveType(f.Type)
+
+		// Apply non-null pointer overrides: unwrap optional types for fields
+		// that are guaranteed non-null in successful API responses.
+		qualifiedName := fmt.Sprintf("%s.%s", name, f.Name)
+		if nonNullPointers[qualifiedName] && fi.IsOptional {
+			fi.RustType = strings.TrimSuffix(strings.TrimPrefix(fi.RustType, "Option<"), ">")
+			fi.PythonType = strings.TrimSuffix(fi.PythonType, " | None")
+			fi.TypeScriptType = strings.TrimSuffix(fi.TypeScriptType, " | undefined")
+			fi.IsOptional = false
+			fi.IsNonNull = true
+		}
 
 		// Handle views.Slice[T] which is a pointer to a views.Slice
 		if isViewsSlice(f.Type) {

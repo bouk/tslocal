@@ -288,7 +288,7 @@ export const StatusSchema = z.object({
   AuthURL: z.string().default(""),
   /** Tailscale IP(s) assigned to this node */
   TailscaleIPs: goSlice(z.string()),
-  Self: PeerStatusSchema.nullish(),
+  Self: PeerStatusSchema.prefault({}),
   /**
    * ExitNodeStatus describes the current exit node.
    * If nil, an exit node is not in use.
@@ -990,8 +990,8 @@ export type ServeConfig = z.infer<typeof ServeConfigSchema> & {
  * In successful whois responses, Node and UserProfile are never nil.
  */
 export const WhoIsResponseSchema = z.object({
-  Node: NodeSchema.nullish(),
-  UserProfile: UserProfileSchema.nullish(),
+  Node: NodeSchema.prefault({}),
+  UserProfile: UserProfileSchema.prefault({}),
   /**
    * CapMap is a map of capabilities to their values.
    * See tailcfg.PeerCapMap and tailcfg.PeerCapability for details.

@@ -25,7 +25,7 @@ class Status(msgspec.Struct, rename="pascal", omit_defaults=True):
     auth_url: str = msgspec.field(default="", name="AuthURL")
     # Tailscale IP(s) assigned to this node
     tailscale_ips: list[str] | None = msgspec.field(default=None, name="TailscaleIPs")
-    self_: PeerStatus | None = None
+    self_: PeerStatus = msgspec.field(default_factory=lambda: PeerStatus())
     # ExitNodeStatus describes the current exit node.
     # If nil, an exit node is not in use.
     exit_node_status: ExitNodeStatus | None = None
@@ -735,8 +735,8 @@ class ServiceConfig(msgspec.Struct, rename="pascal", omit_defaults=True):
 class WhoIsResponse(msgspec.Struct, rename="pascal"):
     "WhoIsResponse is the JSON type returned by tailscaled debug server's /whois?ip=$IP handler.\nIn successful whois responses, Node and UserProfile are never nil."
 
-    node: Node | None = None
-    user_profile: UserProfile | None = None
+    node: Node = msgspec.field(default_factory=lambda: Node())
+    user_profile: UserProfile = msgspec.field(default_factory=lambda: UserProfile())
     # CapMap is a map of capabilities to their values.
     # See tailcfg.PeerCapMap and tailcfg.PeerCapability for details.
     cap_map: dict[str, list[Any] | None] | None = None

@@ -145,7 +145,6 @@ def test_status(mock_server: tuple[http.server.HTTPServer, int]) -> None:
     status = client.status()
     assert status.version == "1.94.1"
     assert status.backend_state == "Running"
-    assert status.self_ is not None
     assert status.self_.host_name == "myhost"
     client.close()
 
@@ -197,7 +196,6 @@ def test_who_is_proto(mock_server: tuple[http.server.HTTPServer, int]) -> None:
 
     client = make_client()
     result = client.who_is_proto("tcp", "100.64.0.1:80")
-    assert result.user_profile is not None
     assert result.user_profile.login_name == "user@example.com"
     client.close()
 
