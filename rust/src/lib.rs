@@ -9,6 +9,7 @@ mod safesocket;
 mod transport;
 #[allow(missing_docs)]
 mod types;
+mod types_ext;
 
 pub use client::Client;
 pub use error::Error;

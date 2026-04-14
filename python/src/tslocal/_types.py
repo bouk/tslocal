@@ -14,7 +14,7 @@ from tslocal._generated_types import (  # noqa: F401
     TailnetStatus,
     ExitNodeStatus,
     UserProfile,
-    Node,
+    Node as _GeneratedNode,
     Hostinfo,
     NetInfo,
     Service,
@@ -29,6 +29,14 @@ from tslocal._generated_types import (  # noqa: F401
     WhoIsResponse,
     Resolver,
 )
+
+
+class Node(_GeneratedNode):
+    """Node with helper methods."""
+
+    def is_tagged(self) -> bool:
+        """Reports whether the node has any ACL tags."""
+        return len(self.tags) > 0
 
 
 class ServeConfig(_GeneratedServeConfig, omit_defaults=True):
