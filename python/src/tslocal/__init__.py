@@ -23,7 +23,7 @@ from tslocal._types import (
     Hostinfo,
 )
 
-__version__ = "0.3.2"
+__version__ = "1.0.0"
 
 __all__ = [
     "Client",
