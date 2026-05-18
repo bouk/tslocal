@@ -1,7 +1,7 @@
 use crate::error::{error_message_from_body, Error};
 use crate::safesocket;
 use crate::transport::{TailscaleConnector, TransportConfig, auth_header_for_token, resolve_port_and_token};
-use crate::types::{ServeConfig, Status, WhoIsResponse};
+use crate::types::{ServeConfig, Status, TokenResponse, WhoIsResponse};
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
 use hyper::body::Incoming;
@@ -326,6 +326,17 @@ impl Client {
         let mut config: ServeConfig = serde_json::from_slice(&body)?;
         config.e_tag = etag;
         Ok(config)
+    }
+
+    /// Get an OIDC ID token for the given audience.
+    ///
+    /// The token can be presented to any resource provider which offers
+    /// OIDC Federation.
+    pub async fn id_token(&self, aud: &str) -> Result<TokenResponse, Error> {
+        let body = self
+            .get200(&format!("/localapi/v0/id-token?aud={}", crate::urlencode(aud)))
+            .await?;
+        Ok(serde_json::from_slice(&body)?)
     }
 
     /// Set the serve config.

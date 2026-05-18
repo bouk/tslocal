@@ -28,6 +28,7 @@ from tslocal._generated_types import (  # noqa: F401
     ServiceConfig,
     WhoIsResponse,
     Resolver,
+    TokenResponse,
 )
 
 

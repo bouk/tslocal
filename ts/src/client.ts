@@ -12,9 +12,11 @@ import { Transport, type TransportOptions } from "./transport.js";
 import {
   ServeConfigSchema,
   StatusSchema,
+  TokenResponseSchema,
   WhoIsResponseSchema,
   type ServeConfig,
   type Status,
+  type TokenResponse,
   type WhoIsResponse,
 } from "./types.js";
 
@@ -169,6 +171,21 @@ export class Client {
     const config = ServeConfigSchema.parse(parseJSON(resp.body.toString("utf-8"))) as ServeConfig;
     config.ETag = (resp.headers["etag"] as string) ?? "";
     return config;
+  }
+
+  // --- ID Token ---
+
+  /**
+   * Get an OIDC ID token for the given audience.
+   *
+   * The token can be presented to any resource provider which offers
+   * OIDC Federation.
+   */
+  async idToken(aud: string): Promise<TokenResponse> {
+    const data = await this.get200(
+      `/localapi/v0/id-token?aud=${encodeURIComponent(aud)}`,
+    );
+    return TokenResponseSchema.parse(parseJSON(data.toString("utf-8")));
   }
 
   /**

@@ -67,6 +67,7 @@ func main() {
 		{"VIPService", reflect.TypeOf(tailcfg.VIPService{})},
 		{"PortRange", reflect.TypeOf(tailcfg.PortRange{})},
 		{"ProtoPortRange", reflect.TypeOf(tailcfg.ProtoPortRange{})},
+		{"TokenResponse", reflect.TypeOf(tailcfg.TokenResponse{})},
 
 		// ipn
 		{"Prefs", reflect.TypeOf(ipn.Prefs{})},
@@ -114,6 +115,7 @@ func main() {
 		reflect.TypeOf(ipnstate.Status{}),
 		reflect.TypeOf(apitype.WhoIsResponse{}),
 		reflect.TypeOf(ipn.ServeConfig{}),
+		reflect.TypeOf(tailcfg.TokenResponse{}),
 	}
 	reachable := collectReachable(rootTypes, candidates)
 

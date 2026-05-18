@@ -15,6 +15,7 @@ export {
   ServeConfigSchema,
   StatusSchema,
   TailnetStatusSchema,
+  TokenResponseSchema,
   UserProfileSchema,
   WhoIsResponseSchema,
   type ClientVersion,
@@ -23,6 +24,7 @@ export {
   type ServeConfig,
   type Status,
   type TailnetStatus,
+  type TokenResponse,
   type UserProfile,
   type WhoIsResponse,
 } from "./types.js";

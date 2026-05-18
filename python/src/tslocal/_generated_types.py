@@ -632,6 +632,32 @@ class ClientVersion(msgspec.Struct, rename="pascal", omit_defaults=True):
     notify_text: str = ""
 
 
+class TokenResponse(msgspec.Struct, rename="pascal"):
+    "TokenResponse is the response to a TokenRequest."
+
+    # IDToken is a JWT encoding the following standard claims:
+    # 
+    #   `sub` | the MagicDNS name of the node
+    #   `aud` | Audience from the request
+    #   `exp` | Token expiry
+    #   `iat` | Token issuance time
+    #   `iss` | Issuer
+    #   `jti` | Random token identifier
+    #   `nbf` | Not before time
+    # 
+    # It also encodes the following Tailscale specific claims:
+    # 
+    #   `key`       | the node public key
+    #   `addresses` | the Tailscale IPs of the node
+    #   `nid`       | the node ID
+    #   `node`      | the name of the node
+    #   `domain`    | the domain of the node, it has the same format as MapResponse.Domain.
+    #   `tags`      | an array of <domain:tag> on the node (like alice.github:tag:foo or example.com:tag:foo)
+    #   `user`      | user emailish (like alice.github:alice@github or example.com:bob@example.com), if not tagged
+    #   `uid`       | user ID, if not tagged
+    id_token: str = msgspec.field(default="", name="id_token")
+
+
 class ServeConfig(msgspec.Struct, rename="pascal", omit_defaults=True):
     "ServeConfig is the JSON type stored in the StateStore for\nStateKey \"_serve/$PROFILE_ID\" as returned by ServeConfigKey."
 

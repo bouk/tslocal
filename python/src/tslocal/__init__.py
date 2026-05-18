@@ -18,6 +18,7 @@ from tslocal._types import (
     TailnetStatus,
     WhoIsResponse,
     ServeConfig,
+    TokenResponse,
     Node,
     Hostinfo,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "TailnetStatus",
     "WhoIsResponse",
     "ServeConfig",
+    "TokenResponse",
     "Node",
     "Hostinfo",
 ]

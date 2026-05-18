@@ -21,6 +21,7 @@ from tslocal._transport import Transport
 from tslocal._types import (
     ServeConfig,
     Status,
+    TokenResponse,
     WhoIsResponse,
 )
 
@@ -172,6 +173,17 @@ class Client:
         config = decode_json(body, ServeConfig)
         config.e_tag = resp_headers.get("Etag", resp_headers.get("etag", ""))
         return config
+
+    # --- ID Token ---
+
+    def id_token(self, aud: str) -> TokenResponse:
+        """Get an OIDC ID token for the given audience.
+
+        The token can be presented to any resource provider which offers
+        OIDC Federation.
+        """
+        data = self._get200(f"/localapi/v0/id-token?aud={quote(aud)}")
+        return decode_json(data, TokenResponse)
 
     def set_serve_config(self, config: ServeConfig) -> None:
         """Set the serve config.

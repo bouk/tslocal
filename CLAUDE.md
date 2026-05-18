@@ -55,6 +55,7 @@ All three clients implement the same subset of the Tailscale Local API:
 | Get TLS certificate with minimum validity | `CertPairWithValidity` | `cert_pair_with_validity` | `cert_pair_with_validity` | `certPairWithValidity` |
 | Get current serve configuration | `GetServeConfig` | `get_serve_config` | `get_serve_config` | `getServeConfig` |
 | Set serve configuration | `SetServeConfig` | `set_serve_config` | `set_serve_config` | `setServeConfig` |
+| Get OIDC ID token for an audience | `IDToken` | `id_token` | `id_token` | `idToken` |
 
 ## Validation
 
