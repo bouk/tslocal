@@ -17,7 +17,7 @@ These are direct ports of the official Go client (`tailscale/client/local`), tar
 **Rust** — add to `Cargo.toml`:
 ```toml
 [dependencies]
-tslocal = "1.0.1"
+tslocal = "1.1.0"
 ```
 
 **Python**:
