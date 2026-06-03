@@ -1,4 +1,5 @@
 export { Client } from "./client.js";
+export { jsonReplacer, jsonReviver, parseJSON } from "./json.js";
 export {
   TailscaleError,
   AccessDeniedError,

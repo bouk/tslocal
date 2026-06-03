@@ -11,7 +11,7 @@ from typing import NamedTuple
 
 
 LOCAL_API_HOST = "local-tailscaled.sock"
-CURRENT_CAP_VERSION = 131
+CURRENT_CAP_VERSION = 138
 
 
 class PortAndToken(NamedTuple):

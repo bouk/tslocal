@@ -13,7 +13,7 @@ describe("constants", () => {
   });
 
   it("CURRENT_CAP_VERSION", () => {
-    expect(CURRENT_CAP_VERSION).toBe(131);
+    expect(CURRENT_CAP_VERSION).toBe(138);
   });
 });
 

@@ -226,6 +226,14 @@ export const UserProfileSchema = z.object({
   /** "Alice Smith" */
   DisplayName: z.string().default(""),
   ProfilePicURL: z.string().nullish(),
+  /**
+   * Groups is a subset of SCIM groups (e.g. "engineering@example.com")
+   * or group names in the tailnet policy document (e.g. "group:eng")
+   * that contain this user and that the coordination server was
+   * configured to report to this node.
+   * The list is always sorted when loaded from storage.
+   */
+  Groups: goSlice(z.string()),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
@@ -247,7 +255,7 @@ export const ClientVersionSchema = z.object({
   /**
    * UrgentSecurityUpdate is set when the client is missing an important
    * security update. That update may be in LatestVersion or earlier.
-   * UrgentSecurityUpdate should not be set if RunningLatest is false.
+   * UrgentSecurityUpdate should not be set if RunningLatest is true.
    */
   UrgentSecurityUpdate: z.boolean().nullish(),
   /**
@@ -584,6 +592,8 @@ export const HostinfoSchema = z.object({
   AppConnector: z.boolean().nullish(),
   /** opaque hash of the most recent list of tailnet services, change in hash indicates config should be fetched via c2n */
   ServicesHash: z.string().nullish(),
+  /** if the client is willing to relay traffic for other peers */
+  PeerRelay: z.boolean().nullish(),
   /** the client’s selected exit node, empty when unselected. */
   ExitNodeID: z.string().nullish(),
   /**

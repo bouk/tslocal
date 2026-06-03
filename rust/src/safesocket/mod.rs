@@ -20,7 +20,7 @@ pub fn default_socket_path() -> &'static str {
 pub const LOCAL_API_HOST: &str = "local-tailscaled.sock";
 
 /// Current capability version sent in the Tailscale-Cap header.
-pub const CURRENT_CAP_VERSION: u32 = 131;
+pub const CURRENT_CAP_VERSION: u32 = 138;
 
 #[cfg(test)]
 mod tests {
@@ -41,6 +41,6 @@ mod tests {
     #[test]
     fn test_constants() {
         assert_eq!(LOCAL_API_HOST, "local-tailscaled.sock");
-        assert_eq!(CURRENT_CAP_VERSION, 131);
+        assert_eq!(CURRENT_CAP_VERSION, 138);
     }
 }

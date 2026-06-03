@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 
 export const LOCAL_API_HOST = "local-tailscaled.sock";
-export const CURRENT_CAP_VERSION = 131;
+export const CURRENT_CAP_VERSION = 138;
 
 export interface PortAndToken {
   port: number;

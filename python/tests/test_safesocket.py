@@ -17,7 +17,7 @@ def test_local_api_host() -> None:
 
 
 def test_current_cap_version() -> None:
-    assert CURRENT_CAP_VERSION == 131
+    assert CURRENT_CAP_VERSION == 138
 
 
 def test_default_socket_path() -> None:

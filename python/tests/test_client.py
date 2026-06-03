@@ -49,7 +49,7 @@ class MockHandler(http.server.BaseHTTPRequestHandler):
         # Check required headers
         cap = self.headers.get("Tailscale-Cap")
         host = self.headers.get("Host")
-        assert cap == "131", f"Expected Tailscale-Cap: 131, got {cap}"
+        assert cap == "138", f"Expected Tailscale-Cap: 138, got {cap}"
         assert host == "local-tailscaled.sock", f"Expected Host: local-tailscaled.sock, got {host}"
 
         # Record request details

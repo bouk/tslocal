@@ -196,6 +196,12 @@ class UserProfile(msgspec.Struct, rename="pascal", omit_defaults=True):
     # "Alice Smith"
     display_name: str = ""
     profile_pic_url: str = msgspec.field(default="", name="ProfilePicURL")
+    # Groups is a subset of SCIM groups (e.g. "engineering@example.com")
+    # or group names in the tailnet policy document (e.g. "group:eng")
+    # that contain this user and that the coordination server was
+    # configured to report to this node.
+    # The list is always sorted when loaded from storage.
+    groups: list[str] = []
 
 
 class Node(msgspec.Struct, rename="pascal", omit_defaults=True):
@@ -453,6 +459,8 @@ class Hostinfo(msgspec.Struct, rename="pascal", omit_defaults=True):
     app_connector: bool | None = None
     # opaque hash of the most recent list of tailnet services, change in hash indicates config should be fetched via c2n
     services_hash: str = ""
+    # if the client is willing to relay traffic for other peers
+    peer_relay: bool = False
     # the client’s selected exit node, empty when unselected.
     exit_node_id: str = msgspec.field(default="", name="ExitNodeID")
     # Location represents geographical location data about a
@@ -618,7 +626,7 @@ class ClientVersion(msgspec.Struct, rename="pascal", omit_defaults=True):
     latest_version: str = ""
     # UrgentSecurityUpdate is set when the client is missing an important
     # security update. That update may be in LatestVersion or earlier.
-    # UrgentSecurityUpdate should not be set if RunningLatest is false.
+    # UrgentSecurityUpdate should not be set if RunningLatest is true.
     urgent_security_update: bool = False
     # Notify is whether the client should do an OS-specific notification about
     # a new version being available. This should not be populated if

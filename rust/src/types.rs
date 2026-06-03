@@ -322,6 +322,14 @@ pub struct UserProfile {
     #[serde(skip_serializing_if = "String::is_empty")]
     #[serde(default)]
     pub profile_pic_url: String,
+    /// Groups is a subset of SCIM groups (e.g. "engineering@example.com")
+    /// or group names in the tailnet policy document (e.g. "group:eng")
+    /// that contain this user and that the coordination server was
+    /// configured to report to this node.
+    /// The list is always sorted when loaded from storage.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
+    pub groups: Vec<String>,
 }
 
 /// Node is a Tailscale device in a tailnet.
@@ -749,6 +757,10 @@ pub struct Hostinfo {
     #[serde(skip_serializing_if = "String::is_empty")]
     #[serde(default)]
     pub services_hash: String,
+    /// if the client is willing to relay traffic for other peers
+    #[serde(skip_serializing_if = "is_default")]
+    #[serde(default)]
+    pub peer_relay: bool,
     /// the client’s selected exit node, empty when unselected.
     #[serde(rename = "ExitNodeID")]
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -1012,7 +1024,7 @@ pub struct ClientVersion {
     pub latest_version: String,
     /// UrgentSecurityUpdate is set when the client is missing an important
     /// security update. That update may be in LatestVersion or earlier.
-    /// UrgentSecurityUpdate should not be set if RunningLatest is false.
+    /// UrgentSecurityUpdate should not be set if RunningLatest is true.
     #[serde(skip_serializing_if = "is_default")]
     #[serde(default)]
     pub urgent_security_update: bool,

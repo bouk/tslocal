@@ -6,7 +6,7 @@ The libraries should use exact ports of the Go source, you can find the original
 
 ## Versioning
 
-All packages share the same version. Versions must be kept in lockstep across all three packages. The libraries target Tailscale **v1.94.1** (matching `tailscale/` checkout at v1.94.1). Use the `/release` skill to publish a new version.
+All packages share the same version. Versions must be kept in lockstep across all three packages. The libraries target Tailscale **v1.98.5** (matching `tailscale/` checkout at v1.98.5). Use the `/release` skill to publish a new version.
 
 ## Project Structure
 
@@ -33,7 +33,7 @@ All packages share the same version. Versions must be kept in lockstep across al
 ## Conventions
 
 - Go JSON uses PascalCase field names; Rust uses serde rename, Python converts snake_case↔PascalCase, TypeScript interfaces match wire format directly
-- All HTTP requests use `Host: local-tailscaled.sock` and header `Tailscale-Cap: 131` (CurrentCapabilityVersion from tailcfg.go)
+- All HTTP requests use `Host: local-tailscaled.sock` and header `Tailscale-Cap: 138` (CurrentCapabilityVersion from tailcfg.go)
 - Error mapping: HTTP 403→AccessDeniedError, 412→PreconditionsFailedError, 404 on WhoIs→PeerNotFoundError
 - Connections should be reused where possible (HTTP keep-alive, connection pooling)
 - TDD: write failing tests first, then implement

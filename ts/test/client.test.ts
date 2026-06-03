@@ -32,7 +32,7 @@ beforeAll(
     new Promise<void>((resolve) => {
       server = http.createServer((req, res) => {
         // Verify required headers
-        expect(req.headers["tailscale-cap"]).toBe("131");
+        expect(req.headers["tailscale-cap"]).toBe("138");
         expect(req.headers["host"]).toBe("local-tailscaled.sock");
 
         lastRequestMethod = req.method;
